@@ -144,7 +144,13 @@ export class AutoRouteModule extends Module {
             Scheduler.scheduleLowestPostTickTask(() => {
                 let tps = AutoRouteModule.throttleTps.getValue();
                 if (tps === 20) return;
-                const elapsedTicks = mc.field_71428_T.field_74280_b;
+                const timer = mc.field_71428_T;
+                if (!timer) {
+                    AutoRouteModule.zeroTick.setValue(false);
+                    ChatUtils.prefixChat("remove oringo for zerotick")
+                    return;
+                }
+                const elapsedTicks = timer.field_74280_b;
                 if (elapsedTicks >= AutoRouteModule.maxShiftedTicks.getValue()) tps = AutoRouteModule.releaseTps.getValue();
                 const tick = 1000 / tps;
                 const escape = pretick + tick;
