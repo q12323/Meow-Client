@@ -1,16 +1,19 @@
 # 250416 Update
 ## New Features
 * 0 Tick Autoroute
-* Etherwarp Position Fix
+* Etherwarp Fix Property
 * Faster Item Swap
 * KillAura
 * Insta Clip
 * Better Pearl Clip
+* Ignore Mimic Chest Property
+* Better Sneaking
+* RelicAura
 
 ### 0 Tick Autoroute
 * Now, you can throttle your Mainthread. Multiplying throttle to faster Route! :D
 
-### Etherwarp Position Fix
+### Etherwarp Fix Property
 * Autoroute Improvement
 
 ### Faster Item Swap
@@ -26,3 +29,11 @@
 ### Better Pearl Clip
 * AutoRoute Improvement
 
+### Ignore Mimic Chest Property
+* Literally!
+
+### Better Sneaking
+* AutoRoute - etherwarptarget Improvement
+
+### RelicAura
+* Relic-Aura. Clicks correct relic thingy.
