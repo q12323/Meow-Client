@@ -37,3 +37,7 @@
 
 ### RelicAura
 * Relic-Aura. Clicks correct relic thingy.
+
+# 250416 HOTFIX
+## Fixes
+* Fixed Zero Tick crashes or occuring an error for Oringo Client Players.
