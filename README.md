@@ -1,43 +1,38 @@
-# 250416 Update
-## New Features
-* 0 Tick Autoroute
-* Etherwarp Fix Property
-* Faster Item Swap
+# Meow Client is...
+* No GUI,
+* Myau Vibe,
+* and, All-in-one Dungeon Utils.
+
+# Features
+**Combat**
+* AimAssist
+* AutoClicker
+* ESP
+* NoHitDelay
+* RightClicker
 * KillAura
-* Insta Clip
-* Better Pearl Clip
-* Ignore Mimic Chest Property
-* Better Sneaking
+* KeepSprint
+* Speed
+* Velocity
+
+**Dungeon**
+* Auto Ice Fill
+* AutoRoute
+* AutoTerms
+* AutoWish
+* Bar Clip
+* CrystalAura
+* ESP
 * RelicAura
+* TriggerBot
 
-### 0 Tick Autoroute
-* Now, you can throttle your Mainthread. Multiplying throttle to faster Route! :D
+**And Some Others!**
 
-### Etherwarp Fix Property
-* Autoroute Improvement
+# How to install Meow Client?
+1. Install ctjs (ChatTriggers) from ChatTriggers.com
+2. Download MeowClient from Release.
+3. After launch your MC with ctjs, use /ct files.
+4. Put MeowClient inside modules folder.
+5. use /ct reload ingame, now good to go!
 
-### Faster Item Swap
-* AutoRoute Improvement
-
-### KillAura
-* An experimental feature
-
-### Insta Clip
-* Woah! Are you scared to fail an insta clear beside start room? 
-* No worries! Meow will meow for you! :D
-
-### Better Pearl Clip
-* AutoRoute Improvement
-
-### Ignore Mimic Chest Property
-* Literally!
-
-### Better Sneaking
-* AutoRoute - etherwarptarget Improvement
-
-### RelicAura
-* Relic-Aura. Clicks correct relic thingy.
-
-# 250417 HOTFIX
-## Fixes
-* Fixed Zero Tick crashes or occurring an error for Oringo Client Players.
+### Made By sAPv
