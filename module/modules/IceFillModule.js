@@ -19,6 +19,14 @@ const Back = KeyBindingUtils.gameSettings.field_74368_y;
 const Right = KeyBindingUtils.gameSettings.field_74366_z;
 
 const OdinIceFillSolver = Java.type("me.odinmain.features.impl.dungeon.puzzlesolvers.IceFillSolver");
+let hasOdin = true;
+let currentPatternsField;
+try {
+    currentPatternsField = OdinIceFillSolver.class.getDeclaredField("currentPatterns");
+    currentPatternsField.setAccessible(true);
+} catch (e) {
+    hasOdin = false;
+}
 
 export class IceFillModule extends Module {
 
@@ -38,7 +46,9 @@ export class IceFillModule extends Module {
     }
 
     setToggled(toggled) {
-        this.resetPath();
+        if (hasOdin) {
+            this.resetPath();
+        } else toggled = false;
         super.setToggled(toggled);
     }
 
@@ -144,10 +154,12 @@ export class IceFillModule extends Module {
     }
 
     scan() {
-        if (OdinIceFillSolver.INSTANCE.currentPatterns.length < 1) return;
+        const patterns = this.getCurrentPatterns();
+        if (!patterns) return;
+        if (patterns.length < 1) return;
         this.resetPath();
         let lastY = 70;
-        for (let vec3 of OdinIceFillSolver.INSTANCE.currentPatterns) {
+        for (let vec3 of patterns) {
             let x = vec3.field_72450_a;
             let y = Math.floor(vec3.field_72448_b);
             let z = vec3.field_72449_c;
@@ -164,6 +176,10 @@ export class IceFillModule extends Module {
         }
         console.log(this.path.toString())
 
+    }
+
+    getCurrentPatterns() {
+        return hasOdin ? currentPatternsField.get(OdinIceFillSolver.INSTANCE) : null;
     }
 
     isMoving() {
