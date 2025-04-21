@@ -1,4 +1,3 @@
-// 고양 쏜 아우라a
 import "./config/Config";
 import "./module/modules/autoRoute/route/RoutesList";
 import "./module/modules/autoRoute/AutoRouteConfig";
@@ -8,7 +7,7 @@ import "./weapon/WeaponManager";
 import "./trigger/Triggers";
 import "./killaura"
 import { ChatUtils } from "./utils/ChatUtils";
-// import { sbapi } from "./skyblockapitest";
+import { APIUtils } from "./utils/APIUtils";
 
 function instaClip(yaw) {
     if (yaw < -135) {
@@ -99,21 +98,22 @@ let teams = register("PacketReceived", (packet) => {
     instaClip(Player.getYaw());
 }).setFilteredClass(S3EPacketTeams).unregister();
 
-// sbapi.addAuctionItemId("NECRON_HANDLE");
-// sbapi.addBazaarItemId("WITHER_SHIELD_SCROLL");
-
-// setTimeout(() => {
-//     console.time("auction")
-//     sbapi.updateAuctionData();
-//     console.timeEnd("auction")
-//     console.time("bazaar");
-//     sbapi.updateBazaarData();
-//     console.timeEnd("bazaar")
-    
-//     setTimeout(() => {
-//         console.log(sbapi.getItemPrice("NECRON_HANDLE"))
-//         console.log(sbapi.getItemPrice("WITHER_SHIELD_SCROLL"))
-//     }, 10000);
-// }, 0);
+register("Command", (name) => {
+    if (!FileLib.exists("MeowClient/", name)) {
+        ChatLib.chat("file does not exist");
+        return;
+    }
+    const json = JSON.parse(FileLib.read("MeowClient/", name));
+    autismToMeow(json);
+    ChatLib.chat("autism config converted");
+}).setName("convertautism")
 
 ChatUtils.prefixChat(`&aReloaded &cM&6e&eo&aw&7&o(Beta!)&a.`)
+
+let authenticated = false
+
+register("worldload", () => {
+    if (authenticated) return;
+    authenticated = true;
+    APIUtils.auth();
+})

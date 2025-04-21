@@ -95,10 +95,10 @@ export class RouteCommand extends Command {
                     ChatUtils.prefixChat("&awalk&r Route has been added");
                     break;
 
-                case "bat":
+                /*case "bat":
                     new BatRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], awaitSecret, yaw, pitch);
                     ChatUtils.prefixChat("&abat&r Route has been added");
-                    break;
+                    break;*/
 
                 case "boom":
                     new BoomRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], awaitSecret, yaw, pitch);
@@ -110,8 +110,9 @@ export class RouteCommand extends Command {
                     ChatUtils.prefixChat("stop route added");
                     break;
 
+                case "bat":
                 case "aotv": {
-                    ChatUtils.prefixChat("recording aotv do not move!");
+                    ChatUtils.prefixChat(`recording ${arg2} do not move!`);
                     const timeClicked = Date.now();
                     McUtils.sendUseItem();
                     Scheduler.scheduleLowS08Task((packet, event) => {
@@ -135,8 +136,19 @@ export class RouteCommand extends Command {
 
                         const relTarget = RoomUtils.getRelativeBlockPos(new BlockPos(x, y, z).toMCBlock());
 
-                        new AotvRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], awaitSecret, yaw, pitch, relTarget.func_177958_n(), relTarget.func_177956_o(), relTarget.func_177952_p());
-                        ChatUtils.prefixChat("aotv route added")
+                        Client.scheduleTask(() => {
+                            try {
+                                if (arg2 === "aotv") 
+                                    new AotvRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], awaitSecret, yaw, pitch, relTarget.func_177958_n(), relTarget.func_177956_o(), relTarget.func_177952_p());
+                                else
+                                    new BatRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], awaitSecret, yaw, pitch, relTarget.func_177958_n(), relTarget.func_177956_o(), relTarget.func_177952_p());
+                            
+                                ChatUtils.prefixChat(`${arg2} route added`);
+                            } catch (error) {
+                                console.log("error while adding route: " + error);
+                                ChatUtils.prefixChat(`&c&o${args[2]}&r Route couldn't be added`);
+                            }
+                        })
                     })
                     break;
                 }

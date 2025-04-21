@@ -1,3 +1,4 @@
+import { ChatUtils } from "../../../../../utils/ChatUtils";
 import { HotbarSwapper } from "../../../../../utils/HotbarSwapper";
 import { ItemUtils } from "../../../../../utils/ItemUtils";
 import { McUtils } from "../../../../../utils/McUtils";
@@ -18,6 +19,7 @@ export class AotvRoute extends Route {
         this.targetY = Number(targetY);
         this.targetZ = Number(targetZ);
         if (isNaN(this.yaw) || isNaN(this.pitch) || isNaN(this.targetX) || isNaN(this.targetY) || isNaN(this.targetZ)) {
+            this.delete();
             throw new Error("yaw, pitch, targetX, y or z is not valid");
         }
     }
@@ -76,7 +78,7 @@ export class AotvRoute extends Route {
 
         Scheduler.schedulePostTickTask(() => {
             const offsetY = Player.getY() - Math.floor(Player.getY());
-            if (offsetY !== 0 && offsetY !== 0.05) return
+            if (offsetY !== 0) return
             if (!SecretThing.canSendC08()) return;
             SecretThing.sendUseItem();
 

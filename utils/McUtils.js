@@ -48,6 +48,8 @@ export class McUtils {
 
     static MovingObjectPosition = MovingObjectPosition;
 
+    static MathHelper = MathHelper;
+
     static setRightClickDelayTimer(tick) {
         rightClickDelayTimer.setInt(McUtils.mc, tick);
     }
@@ -404,7 +406,7 @@ export class McUtils {
         return new MovingObjectPosition(mop.field_72307_f, mop.field_178784_b, blockPos);
     }
 
-    static getClosesetMOPOnEntity(eyePos, entity) {
+    static getClosesetMOPOnEntity(eyePos, entity, yaw = Player.getYaw(), pitch = Player.getPitch()) {
         const collisionBorderSize = entity.func_70111_Y();
         const aabb = entity.func_174813_aQ();
         
@@ -424,8 +426,8 @@ export class McUtils {
         
         // when inside of target entity
         if (eyePos.field_72450_a === closest.field_72450_a && eyePos.field_72448_b === closest.field_72448_b && eyePos.field_72449_c === closest.field_72449_c) {
-            const yaw = Player.getYaw() * degToRad;
-            const pitch = Player.getPitch() * degToRad;
+            yaw *= degToRad;
+            pitch *= degToRad;
     
             const cosPitch = this.cos(pitch);
             const dx = -cosPitch * this.sin(yaw);

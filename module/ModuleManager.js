@@ -22,10 +22,11 @@ import { SprintModule } from "./modules/SprintModule";
 // import { TNTAuraModule } from "./modules/TNTAuraModule";
 // import { NPModule } from "./modules/NPModule";
 // import { TestModule } from "./modules/TestModule";
-//import { RareDropModule } from "./modules/RareDropModule"
+import { RareDropModule } from "./modules/RareDropModule"
 import { VelocityModule } from "./modules/VelocityModule";
 import { XFlipModule } from "./modules/XFlipModule";
 import { ZFlipModule } from "./modules/ZFlipModule";
+import { TriggerBotModule } from "./modules/TriggerBotModule";
 
 export const ModuleManager = new class {
 	
@@ -51,12 +52,13 @@ export const ModuleManager = new class {
 		this.add(new IceFillModule());
 		this.add(new KeepSprintModule());
 		this.add(new NoHitDelayModule());
-		//this.add(new RareDropModule());
+		this.add(new RareDropModule());
 		this.add(new RelicAuraModule());
 		this.add(new RightClickerModule());
 		this.add(new SpeedModule());
 		this.add(new SprintModule());
 		// this.add(new TNTAuraModule());
+		this.add(new TriggerBotModule());
 		this.add(new VelocityModule());
 		this.add(new XFlipModule());
 		this.add(new ZFlipModule());

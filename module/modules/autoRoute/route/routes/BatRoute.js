@@ -6,22 +6,34 @@ import { Scheduler } from "../../../../../utils/Scheduler";
 import { SecretThing } from "../../SecretThing";
 import { Route } from "../Route";
 import { SilentRotationHandler } from "../SilentRotationHandler";
+import { doZeroPingAotv } from "../../ZeroPingEtherwarp";
 
 const EntityBat = Java.type("net.minecraft.entity.passive.EntityBat");
 
 export class BatRoute extends Route {
-    constructor(room, x, y, z, awaitSecret, yaw, pitch) {
+    constructor(room, x, y, z, awaitSecret, yaw, pitch, targetX, targetY, targetZ) {
         super("bat", room, x, y, z, awaitSecret, 2);
         this.yaw = Number(yaw);
         this.pitch = Number(pitch);
-        if (isNaN(this.yaw) || isNaN(this.pitch)) throw new Error("value is not valid");
+        this.targetX = Number(targetX);
+        this.targetY = Number(targetY);
+        this.targetZ = Number(targetZ);
+        if (isNaN(this.targetX) || isNaN(this.targetY) || isNaN(this.targetZ)) this.isZeroping = false;
+        else this.isZeroping = true;
+        if (isNaN(this.yaw) || isNaN(this.pitch)) {
+            this.delete();
+            throw new Error("value is not valid");
+        }
         this.forceBat = false;
     }
 
     getJsonObject(json) {
         const obj = super.getJsonObject(json);
         obj.data.yaw = this.yaw;
-        obj.data.pitch = this.pitch
+        obj.data.pitch = this.pitch;
+        obj.data.x = this.targetX;
+        obj.data.y = this.targetY;
+        obj.data.z = this.targetZ;
         return obj;
     }
 
@@ -69,6 +81,12 @@ export class BatRoute extends Route {
         Scheduler.schedulePostTickTask(() => {
             if (!SecretThing.canSendC08()) return;
             SecretThing.sendUseItem();
+            if (this.isZeroping) {
+                let targetPos = RoomUtils.getRealBlockPos(new BlockPos(this.targetX, this.targetY, this.targetZ).toMCBlock());
+                targetPos = [targetPos.func_177958_n(), targetPos.func_177956_o(), targetPos.func_177952_p()];
+
+                doZeroPingAotv(targetPos[0], targetPos[1], targetPos[2]);
+            }
             this.activated = true;
             SecretThing.secretClicked = false;
         });

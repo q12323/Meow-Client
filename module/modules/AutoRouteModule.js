@@ -20,15 +20,18 @@ import { Scheduler } from "../../utils/Scheduler"
 import { PropertyInteger } from "../../property/properties/PropertyInteger";
 
 const mc = McUtils.mc;
-const LivingUpdateEvent = Java.type("net.minecraftforge.event.entity.living.LivingEvent$LivingUpdateEvent");
 const MouseEvent = Java.type("net.minecraftforge.client.event.MouseEvent");
 const MCBlock = Java.type("net.minecraft.block.Block");
 const TickEvent = Java.type("net.minecraftforge.fml.common.gameevent.TickEvent");
+const AxisAlignedBB = Java.type("net.minecraft.util.AxisAlignedBB");
 
 const Forward = KeyBindingUtils.gameSettings.field_74351_w.func_151463_i();
 const Left = KeyBindingUtils.gameSettings.field_74370_x.func_151463_i();
 const Back = KeyBindingUtils.gameSettings.field_74368_y.func_151463_i();
 const Right = KeyBindingUtils.gameSettings.field_74366_z.func_151463_i();
+
+const timerField = mc.getClass().getDeclaredField("field_71428_T");
+timerField.setAccessible(true);
 
 let hasZpew = FileLib.exists(Config.modulesFolder + "/ZeroPingEtherwarp/index.js");
 
@@ -87,6 +90,8 @@ export class AutoRouteModule extends Module {
             setEtherwarpFix(value);
         })
 
+
+        
         this.mouseOver = null;
 
         this.triggers.add(register("Tick", () => {
@@ -144,7 +149,7 @@ export class AutoRouteModule extends Module {
             Scheduler.scheduleLowestPostTickTask(() => {
                 let tps = AutoRouteModule.throttleTps.getValue();
                 if (tps === 20) return;
-                const timer = mc.field_71428_T;
+                const timer = timerField.get(mc);
                 if (!timer) {
                     AutoRouteModule.zeroTick.setValue(false);
                     ChatUtils.prefixChat("remove oringo for zerotick")
@@ -163,9 +168,11 @@ export class AutoRouteModule extends Module {
         const routes = Routes.getRoom(RoomUtils.getCurrentRoomName());
         if (!routes) return [];
         let routesQueue = [];
+        const vec1 = McUtils.getVec3FromArray([Player.getLastX(), Player.getLastY(), Player.getLastZ()]);
+        const vec2 = McUtils.getVec3FromArray([Player.getX(), Player.getY(), Player.getZ()]);
         for (let route of routes) {
             if (route.deleted) continue;
-            if (this.isInRoute(route)) {
+            if (this.isInRoute(route) || this.didPassRoute(route, vec1, vec2)) {
                 if (reset) route.reset();
                 if (!route.activated) routesQueue.push(route);
             } else {
@@ -194,6 +201,17 @@ export class AutoRouteModule extends Module {
         const crds = this.getRealCoords(route);
 
         return Math.abs(Player.getX() - crds[0]) < 0.5 && Math.abs(Player.getY() - crds[1]) < 0.6 && Math.abs(Player.getZ() - crds[2]) < 0.5;
+    }
+
+    didPassRoute(route, vec1, vec2) {
+        if (route.deleted) {
+            return false;
+        }
+        const crds = this.getRealCoords(route);
+        const aabb = new AxisAlignedBB(crds[0] - 0.5, crds[1], crds[2] - 0.5, crds[0] + 0.5, crds[1], crds[2] + 0.5);
+        const intercept = aabb.func_72327_a(vec1, vec2);
+        if (!intercept) return false;
+        return true;
     }
 
     onRenderWorld(partialTicks) {

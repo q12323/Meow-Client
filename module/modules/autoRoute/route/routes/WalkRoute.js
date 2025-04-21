@@ -11,7 +11,10 @@ export class WalkRoute extends Route {
         super("walk", room, x, y, z, awaitSecret, -1);
         this.yaw = Number(yaw);
         this.pitch = Number(pitch);
-        if (isNaN(this.yaw) || isNaN(this.pitch)) throw new Error("value is not valid");
+        if (isNaN(this.yaw) || isNaN(this.pitch)) {
+            this.delete();
+            throw new Error("value is not valid");
+        }
     }
 
     getJsonObject(json) {

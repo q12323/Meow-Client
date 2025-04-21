@@ -31,7 +31,7 @@ export const HotbarSwapper = new class {
      */
     changeHotbar(index) {
         if (isNaN(index)) return false;
-        if (this.getCurrentPlayerItem() === index) return true;
+        if (index === Player.getHeldItemIndex() && this.getCurrentPlayerItem() === index) return true;
         if (this.didSentChangePacket) {
             KeyBindingUtils.pressHotbar(index);
             return false;

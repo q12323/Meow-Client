@@ -18,10 +18,10 @@ export class SilentRotationHandler {
      * sets further rotations on this tick to silent
      */
     static doSilentRotation() {
-        if (SilentRotationHandler.blockSilentRotation) return;
+        if (SilentRotationHandler.blockSilentRotation) return false;
         const thePlayer = Player.getPlayer();
-        if (thePlayer === null) return;
-        if (Object.values(SilentRotationHandler.realRotations).every((v) => v !== null)) return;
+        if (thePlayer === null) return false;
+        if (Object.values(SilentRotationHandler.realRotations).every((v) => v !== null)) return false;
         
         SilentRotationHandler.realRotations.yaw = thePlayer.field_70177_z;
         SilentRotationHandler.realRotations.pitch = thePlayer.field_70125_A;
@@ -41,10 +41,12 @@ export class SilentRotationHandler {
             SilentRotationHandler.realRotations.prevYaw = null;
             SilentRotationHandler.realRotations.prevPitch = null;
 
-            Scheduler.scheduleHighPostTickTask(() => {
+            Scheduler.scheduleHighPreTickTask(() => {
                 SilentRotationHandler.unregisterRender();
-            }, 1, 10);
+            });
         });
+
+        return true;
     }
 
     static renderPitch = {
@@ -59,6 +61,9 @@ export class SilentRotationHandler {
         if (thePlayer === null) return;
         SilentRotationHandler.renderPitch.now = thePlayer.field_70125_A;
         SilentRotationHandler.renderPitch.prev = thePlayer.field_70127_C;
+
+        thePlayer.field_70761_aq = thePlayer.field_70177_z; // renderyawoffset = rotationyaw
+        thePlayer.field_70759_as = thePlayer.field_70177_z; // rotationyawhead = rotationyaw
 
         SilentRotationHandler.pitchRenderer0.register();
         SilentRotationHandler.pitchRenderer1.register();

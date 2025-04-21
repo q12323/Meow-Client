@@ -4,7 +4,7 @@ export const Ticker = new class {
 
         this.tickTrigger = register("Tick", () => {
             this.tick++;
-        })
+        }).unregister().setPriority(Priority.HIGHEST)
     }
 
     getTick() {

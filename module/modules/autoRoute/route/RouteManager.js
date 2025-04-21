@@ -2,6 +2,7 @@ import { RoomUtils } from "../../../../utils/RoomUtils";
 import { AotvRoute } from "./routes/AotvRoute";
 import { BatRoute } from "./routes/BatRoute";
 import { BoomRoute } from "./routes/BoomRoute";
+import { EtherwarpRoute } from "./routes/EtherwarpRoute";
 import { EtherwarpTargetRoute } from "./routes/EtherwarpTargetRoute";
 import { PearlClipRoute } from "./routes/PearlClipRoute";
 import { StopRoute } from "./routes/StopRoute";
@@ -30,7 +31,7 @@ export const RouteManager = new class {
                 break;
 
             case "bat":
-                new BatRoute(json.room, json.x, json.y, json.z, json.await_secret, data.yaw, data.pitch);
+                new BatRoute(json.room, json.x, json.y, json.z, json.await_secret, data.yaw, data.pitch, data.x, data.y, data.z);
                 break;
 
             case "pearl_clip":
@@ -53,6 +54,13 @@ export const RouteManager = new class {
             case "aotv":
                 new AotvRoute(json.room, json.x, json.y, json.z, json.await_secret, data.yaw, data.pitch, data.x, data.y, data.z);
                 break
+
+            case "etherwarp":
+                new EtherwarpRoute(json.room, json.x, json.y, json.z, json.await_secret, data.yaw, data.pitch);
+                break;
+
+            default:
+                console.log(`Unknown route type: ${json.type}`);
         }
     }
 

@@ -1,5 +1,7 @@
 const TickEvent = Java.type("net.minecraftforge.fml.common.gameevent.TickEvent");
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook");
+const LivingUpdateEvent = Java.type("net.minecraftforge.event.entity.living.LivingEvent$LivingUpdateEvent");
+const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
 
 class Task {
     constructor(callback, ticks = 0, priority = 0) {
@@ -24,31 +26,36 @@ class Tasks {
     }
     
     doTasks(...args) {
-        args ??= [];
-        this.queue.forEach((task, index) => {
-            task.originalIndex = index;
-        });
+        try {
+            args ??= [];
+            this.queue.forEach((task, index) => {
+                task.originalIndex = index;
+            });
 
-        this.queue.sort((a, b) => {
-            if (a.priority !== b.priority) {
-                return a.priority - b.priority;
+            this.queue.sort((a, b) => {
+                if (a.priority !== b.priority) {
+                    return b.priority - a.priority;
+                }
+                return a.originalIndex - b.originalIndex;
+            });
+
+            const after = [];
+
+            while (this.queue.length) {
+                let task = this.queue.shift();
+                if (task.ticks > 0) {
+                    task.ticks--;
+                    after.push(task);
+                    continue;
+                }
+                task.execute(...args);
             }
-            return a.originalIndex - b.originalIndex;
-        });
 
-        const after = [];
-
-        while (this.queue.length) {
-            let task = this.queue.shift();
-            if (task.ticks > 0) {
-                task.ticks--;
-                after.push(task);
-                continue;
-            }
-            task.execute(...args);
+            after.forEach(t => this.queue.push(t));
+        } catch (error) {
+            error = String(error?.toString() + error?.stack || error);
+            console.log(`error while doing tasks ${error}`);
         }
-
-        after.forEach(t => this.queue.push(t));
     }
 }
 
@@ -61,9 +68,14 @@ export const Scheduler = new class {
         this.scheduledHighPostTickTasks = new Tasks();
         this.scheduledLowestPreTickTasks = new Tasks();
         this.scheduledLowestPostTickTasks = new Tasks();
+        this.scheduledPrePlayerTickTasks = new Tasks();
+        this.scheduledPostPlayerTickTasks = new Tasks();
 
         this.scheduledLowS08Tasks = new Tasks();
-        
+
+        this.scheduledPlayerLivingUpdateTasks = new Tasks();
+
+        this.scheduledC03Tasks = new Tasks();
 
         this.tickTrigger = register(TickEvent.ClientTickEvent, (event) => {
             if (event.phase === TickEvent.Phase.START) {
@@ -89,9 +101,30 @@ export const Scheduler = new class {
             }
         }).unregister().setPriority(Priority.LOWEST).unregister();
 
+        this.playerTickTrigger = register(TickEvent.PlayerTickEvent, (event) => {
+            const entity = event.player;
+            if (entity === null) return;
+            if (entity !== Player.getPlayer()) return;
+            if (event.phase === TickEvent.Phase.END) {
+                this.scheduledPostPlayerTickTasks.doTasks(event);
+            } else if (event.phase === TickEvent.Phase.START) {
+                this.scheduledPrePlayerTickTasks.doTasks(event);
+            }
+        }).unregister();
+
         this.lowS08Trigger = register("PacketReceived", (packet, event) => {
             this.scheduledLowS08Tasks.doTasks(packet, event);
         }).setFilteredClass(S08PacketPlayerPosLook).unregister().setPriority(Priority.LOW).unregister();
+
+        this.livingUpdateTrigger = register(LivingUpdateEvent, (event) => {
+            const entity = event.entity;
+            if (entity === null || entity !== Player.getPlayer()) return;
+            this.scheduledPlayerLivingUpdateTasks.doTasks(event);
+        }).unregister();
+
+        this.c03Trigger = register("PacketSent", (packet, event) => {
+            this.scheduledC03Tasks(packet, event);
+        }).setFilteredClass(C03PacketPlayer).unregister();
     }
 
     schedulePreTickTask(task, ticks, priority) {
@@ -118,9 +151,24 @@ export const Scheduler = new class {
         this.scheduledLowestPostTickTasks.add(new Task(task, ticks, priority));
     }
 
+    schedulePrePlayerTickTask(task, ticks, priority) {
+        this.scheduledPrePlayerTickTasks.add(new Task(task, ticks, priority));
+    }
+
+    schedulePostPlayerTickTask(task, ticks, priority) {
+        this.scheduledPostPlayerTickTasks.add(new Task(task, ticks, priority));
+    }
 
     scheduleLowS08Task(task, ticks, priority) {
         this.scheduledLowS08Tasks.add(new Task(task, ticks, priority));
+    }
+
+    schedulePlayerLivingUpdateTask(task, ticks, priority) {
+        this.scheduledPlayerLivingUpdateTasks.add(new Task(task, ticks, priority));
+    }
+
+    scheduleC03Task(task, ticks, priority) {
+        this.scheduledC03Tasks.add(new Task(task, ticks, priority));
     }
 
     register() {
@@ -129,5 +177,7 @@ export const Scheduler = new class {
         this.lowS08Trigger.register();
         this.lowestTickTrigger.register();
         this.lowS08Trigger.register();
+        this.livingUpdateTrigger.register();
+        this.playerTickTrigger.register();
     }
 }

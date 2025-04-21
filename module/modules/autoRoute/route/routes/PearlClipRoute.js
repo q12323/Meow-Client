@@ -14,7 +14,10 @@ export class PearlClipRoute extends Route {
     constructor(room, x, y, z, awaitSecret, distance) {
         super("pearl_clip", room, x, y, z, awaitSecret, 0);
         this.distance = Number(distance);
-        if (isNaN(this.distance)) throw new Error("value is not valid");
+        if (isNaN(this.distance)) {
+            this.delete();
+            throw new Error("value is not valid");
+        }
     }
 
     getJsonObject(json) {
