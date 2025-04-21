@@ -48,7 +48,6 @@ export const SecretThing = new class {
                     if (!this.didMatched && SkyblockUtils.isInSkyblock()) {
                         Client.sendPacket(new C08PacketPlayerBlockPlacement(packet.func_149574_g()));
                     }
-                    ChatLib.chat("0 " + Date.now() + " " + this.didMatched)
                 }, 0, -10)
             }
 
