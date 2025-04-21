@@ -24,7 +24,8 @@
 * CrystalAura
 * ESP
 * RelicAura
-* TriggerBot
+* TriggerBot **(New!)**
+* RareDrop **(New!)**
 
 **And Some Others!**
 
