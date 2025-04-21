@@ -108,7 +108,7 @@ register("Command", (name) => {
     ChatLib.chat("autism config converted");
 }).setName("convertautism")
 
-ChatUtils.prefixChat(`&aReloaded &cM&6e&eo&aw&7&o(Beta!)&a.`)
+ChatUtils.prefixChat(`&aReloaded &cM&6e&eo&aw&a.`)
 
 let authenticated = false
 
