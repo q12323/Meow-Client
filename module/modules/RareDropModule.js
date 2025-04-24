@@ -36,11 +36,11 @@ const itemList = [
     "SHADOW_FURY",
   
     "SECOND_MASTER_STAR",
-  
+    "SPIRIT_WING",
+    "SPIRIT_BONE",
+    
     "FIRST_MASTER_STAR",
-    "SCARF_STUDIES",
-    "ENCHANTMENT_FEATHER_FALLING_6",
-    "NECROMANCER_BROOCH"
+    "SCARF_STUDIES"
 ]
 
 const RNG_WINDOWS = [
