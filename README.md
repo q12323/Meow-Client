@@ -1,3 +1,8 @@
+discord.gg/myau
+@56780077
+@77008765
+@yenauw
+
 # Meow Client is...
 * No GUI,
 * Myau Vibe,
