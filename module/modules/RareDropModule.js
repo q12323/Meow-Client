@@ -13,7 +13,7 @@ const S2DPacketOpenWindow = Java.type("net.minecraft.network.play.server.S2DPack
 const S2EPacketCloseWindow = Java.type("net.minecraft.network.play.server.S2EPacketCloseWindow");
 const C0DPacketCloseWindow = Java.type("net.minecraft.network.play.client.C0DPacketCloseWindow");
 
-const Handle = new Sound({
+let Handle = new Sound({
     source: "handledrop.ogg",
     category: "player",
     stream: true

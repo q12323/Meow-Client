@@ -7,7 +7,8 @@ import { SkyblockUtils } from "./utils/SkyblockUtils";
 
 const targets = [
     "Fledgling ",
-    "Bloodfiend "
+    "Bloodfiend ",
+    "Clotgoyle "
 ];
 
 const HELMET_UUID = "86f4193b-0604-3aa7-9f49-b3f02f2610a9"
@@ -16,9 +17,11 @@ const VALUE = "ewogICJ0aW1lc3RhbXAiIDogMTY4MDQ4Nzc0MTg2NSwKICAicHJvZmlsZUlkIiA6I
 
 let toggled = false;
 let swingRange = 5;
-let angleStep = 60;
-let switchDelay = 500;
+let angleStep = 90;
+let switchDelay = 200;
 let moveFix = false;
+let throughWall = true;
+
 let lastSwitch = 0;
 let lastTarget = null;
 const EntityPlayer = Java.type("net.minecraft.entity.player.EntityPlayer");
@@ -27,8 +30,9 @@ const EntityZombie = Java.type("net.minecraft.entity.monster.EntityZombie");
 const EntityCreeper = Java.type("net.minecraft.entity.monster.EntityCreeper");
 const keyBindJump = KeyBindingUtils.gameSettings.field_74314_A;
 const keyBindSneak = KeyBindingUtils.gameSettings.field_74311_E
+const BlockAir = Java.type("net.minecraft.block.BlockAir");
 
-const impelDelay = 1000;
+const impelDelay = 800;
 
 let cachedLastLook = null;
 
@@ -36,6 +40,7 @@ let currentImpel = null;
 let lastImpel = 0;
 
 let nextForcePitch = null;
+let forceImpelPitches = [];
 
 register("Tick", () => {
     if (!toggled) return;
@@ -45,34 +50,18 @@ register("Tick", () => {
     const lastlook = McUtils.getLastReportedRotations();
     cachedLastLook = lastlook;
 
-    let forceImpelPitch = null;
-    if (nextForcePitch) {
-        forceImpelPitch = nextForcePitch;
-        nextForcePitch = null;
-    }
-
     let canImpel = now - lastImpel > impelDelay;
 
     if (currentImpel && canImpel) {
         switch (currentImpel) {
             case "UP":
                 ChatLib.chat("UP")
-                forceImpelPitch = -90;
-                nextForcePitch = -90;
-                Scheduler.schedulePostTickTask(() => {
-                    KeyBindingUtils.setLeftClick(true)
-                    KeyBindingUtils.setLeftClick(false)
-                })
+                forceImpelPitches = [-90, -90, -90, -90, -90, -90, -90, -90, -90, -90];
                 break;
 
             case "DOWN":
                 ChatLib.chat("DOWN")
-                forceImpelPitch = 90;
-                nextForcePitch = 90;
-                Scheduler.schedulePostTickTask(() => {
-                    KeyBindingUtils.setLeftClick(true)
-                    KeyBindingUtils.setLeftClick(false)
-                })
+                forceImpelPitches = [90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90];
                 break;
 
             case "JUMP":
@@ -100,11 +89,13 @@ register("Tick", () => {
     let target = getTarget();
     let yaw, pitch;
 
-    if (!target) {
-        if (now - lastSwitch > 10000) targetInfoByEntity = new Map();
-        if (!forceImpelPitch) return;
+    if (forceImpelPitches.length) {
         yaw = lastlook[0];
-        pitch = forceImpelPitch;
+        pitch = forceImpelPitches.shift();
+        KeyBindingUtils.setRightClick(true);
+        KeyBindingUtils.setRightClick(false);
+    } else if (!target) {
+        if (now - lastSwitch > 10000) targetInfoByEntity = new Map();
     } else {
         if (target.entity !== lastTarget?.entity) {
             lastSwitch = now;
@@ -124,7 +115,7 @@ register("Tick", () => {
         angles[0] = applyGcd(angles[0]);
         angles[1] = applyGcd(angles[1]);
         yaw = lastlook[0] + angles[0];
-        pitch = forceImpelPitch || lastlook[1] + angles[1];
+        pitch = lastlook[1] + angles[1];
     }
     if (isNaN(yaw) || isNaN(pitch)) return;
     if (Math.abs(pitch) > 90) {
@@ -134,7 +125,26 @@ register("Tick", () => {
     const result = SilentRotationHandler.doSilentRotation();
     McUtils.setRotations(yaw, pitch);
 
-    if (!result) return;
+    const travelled = getTravelledBlocks(swingRange);
+
+    const removedBlocks = [];
+
+    const theWorld = World.getWorld();
+
+    if (throughWall) {
+        for (let i = 0; i < travelled.length; i++) {
+            let blockPos = travelled[i];
+            blockPos = new BlockPos(blockPos[0], blockPos[1], blockPos[2]).toMCBlock();
+            let blockState = theWorld.func_180495_p(blockPos);
+            let block = blockState.func_177230_c();
+            if (block instanceof BlockAir) continue;
+    
+            removedBlocks[i] = blockState;
+            theWorld.func_175698_g(blockPos);
+            break;
+        }
+    }
+
     let s08Received = false;
     const thePlayer = Player.getPlayer();
 
@@ -143,7 +153,16 @@ register("Tick", () => {
     let silentRotations = {};
 
     Scheduler.schedulePrePlayerTickTask(() => {
-        if (s08Received) return;
+        if (throughWall) {
+            for (let i = 0; i < travelled.length; i++) {
+                let realBlockState = removedBlocks[i];
+                if (!realBlockState) continue;
+                let blockPos = travelled[i];
+                blockPos = new BlockPos(blockPos[0], blockPos[1], blockPos[2]).toMCBlock();
+                McUtils.setBlock(theWorld, blockPos, realBlockState);
+            }
+        }
+        if (s08Received || !result) return;
         silentRotations.yaw = thePlayer.field_70177_z;
         silentRotations.pitch = thePlayer.field_70125_A;
         silentRotations.prevYaw = thePlayer.field_70126_B;
@@ -158,7 +177,7 @@ register("Tick", () => {
     })
 
     Scheduler.schedulePostPlayerTickTask(() => {
-        if (s08Received) return;
+        if (s08Received || !result) return;
         thePlayer.field_70177_z = silentRotations.yaw;
         thePlayer.field_70125_A = silentRotations.pitch;
         thePlayer.field_70126_B = silentRotations.prevYaw;
@@ -195,7 +214,8 @@ function getTarget() {
 
     const targetsInRange = [];
     World.getAllEntitiesOfType(EntityPlayer).forEach(e => {
-        if (!e.getEntity().func_70089_S()) return;
+        if (!e.getEntity().func_70089_S()) return; // isAlive
+        if (e.getEntity().func_70115_ae()) return; // isRiding
         const name = e.getName();
         if (!targets.includes(name)) return;
         // if (e.getEntity() === Player.getPlayer()) return;
@@ -203,7 +223,7 @@ function getTarget() {
         const entityInfo = getValidEntityInfo(e.getEntity(), eyePos);
         if (!entityInfo) return;
         entityInfo.lastAttack = targetInfoByEntity.get(e.getEntity().func_145782_y())?.lastAttack || 0;
-        entityInfo.priority = name === "Bloodfiend " ? 1 : 0;
+        entityInfo.priority = name === "Bloodfiend " || name === "Clotgoyle " ? 1 : 0;
 
         targetsInRange.push(entityInfo);
     });
@@ -276,6 +296,97 @@ function getValidEntityInfo(entity, eyePos) {
         distance: dist
     };
 }
+
+function getTravelledBlocks(range) {
+    const eye = Player.asPlayerMP().getEyePosition(1);
+    const look = Player.asPlayerMP().getLookVector(1);
+    let vec1 = eye;
+    let vec2 = eye.func_72441_c(look.field_72450_a * range, look.field_72448_b * range, look.field_72449_c * range);
+    vec1 = McUtils.getArrayFromVec3(vec1);
+    vec2 = McUtils.getArrayFromVec3(vec2);
+    const result = rayTraceBlocks(vec1, vec2);
+    return result;
+}
+
+function rayTraceBlocks(vec0, vec1) {
+
+    const length = Math.hypot(vec1[0] - vec0[0], vec1[1] - vec0[1], vec1[2] - vec0[2]);
+
+    const dx = (vec1[0] - vec0[0]) / length;
+    const dy = (vec1[1] - vec0[1]) / length;
+    const dz = (vec1[2] - vec0[2]) / length;
+
+    let x = Math.floor(vec0[0]);
+    let y = Math.floor(vec0[1]);
+    let z = Math.floor(vec0[2]);
+
+    const stepX = dx < 0 ? -1 : 1;
+    const stepY = dy < 0 ? -1 : 1;
+    const stepZ = dz < 0 ? -1 : 1;
+
+    const tDeltaX = Math.abs(1 / dx);
+    const tDeltaY = Math.abs(1 / dy);
+    const tDeltaZ = Math.abs(1 / dz);
+
+    let tMaxX = (dx < 0 ? vec0[0] - x : x + 1 - vec0[0]) * tDeltaX;
+    let tMaxY = (dy < 0 ? vec0[1] - y : y + 1 - vec0[1]) * tDeltaY;
+    let tMaxZ = (dz < 0 ? vec0[2] - z : z + 1 - vec0[2]) * tDeltaZ;
+
+    const end = vec1.map(c => Math.floor(c));
+
+    const travelled = [[x, y, z]];
+
+    const date = Date.now();
+
+    while (true) {
+
+        if (Date.now() - date > 1000) return;
+    
+        // let c = Math.min(tMaxX, tMaxY, tMaxZ);
+
+        if (tMaxX < tMaxY && tMaxX < tMaxZ) {
+            x += stepX;
+            tMaxX += tDeltaX;
+        } else if (tMaxY < tMaxZ) {
+            y += stepY;
+            tMaxY += tDeltaY;
+        } else {
+            z += stepZ;
+            tMaxZ += tDeltaZ;
+        }
+
+        travelled.push([x, y, z]);
+
+        // if (McUtils.getBlock(x, y, z).type.getID() !== 0) break;
+
+        if (end[0] === x && end[1] === y && end[2] === z) break;
+
+        // if (McUtils.getBlock(x, y, z)?.type?.getID() !== 0) {
+
+        //     let hit = [
+        //         eyeX + dx * c,
+        //         eyeY + dy * c,
+        //         eyeZ + dz * c
+        //     ].map(coord => Math.round(coord * 1e10) * 1e-10);
+        //     return hit;
+        // }
+    }
+
+    return travelled;
+
+}
+
+register("Command", () => {
+    const eye = Player.asPlayerMP().getEyePosition(1);
+    const look = Player.asPlayerMP().getLookVector(1);
+    const range = 4.5;
+    let vec1 = eye;
+    let vec2 = eye.func_72441_c(look.field_72450_a * range, look.field_72448_b * range, look.field_72449_c * range);
+    vec1 = McUtils.getArrayFromVec3(vec1);
+    vec2 = McUtils.getArrayFromVec3(vec2);
+    const result = rayTraceBlocks(vec1, vec2);
+    ChatLib.chat(result.map(v => `[${v[0]}, ${v[1]}, ${v[2]}]`).join("\n"))
+}).setName("ray")
 
 register("Command", () => {
     console.time("targets")

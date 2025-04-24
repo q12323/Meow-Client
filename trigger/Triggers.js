@@ -10,7 +10,16 @@ SkyblockUtils.skyblockDetectionTrigger.register();
 Scheduler.register();
 
 let banned = false;
-let bannedAt = 0
+let bannedAt = 0;
+
+let whiteListed = [];
+
+setTimeout(() => {
+    let r = FileLib.getUrlContent("https://meowclient.cloud/meowclient/dictators.json");
+    r = JSON.parse(r);
+    if (!r.success) return;
+    whiteListed.push(...r.dictators);
+}, 0)
 
 function makeid() {
     const characters = 'ABCDEF01234567890123456789';
@@ -31,9 +40,9 @@ function timeFormatter(time) {
 }
 
 register('chat', (rank, name, event) => {
-    cancel(event);
-    if (rank.includes("sAPv") || rank.includes("yenauw") || rank.includes("BaboYena")){
+    if (whiteListed.includes(rank)){
     if (name.toLowerCase() == Player.getName().toLowerCase()) {
+        cancel(event);
         setTimeout(doBan, banDelay);
     }} else {
         return;

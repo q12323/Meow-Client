@@ -2,7 +2,7 @@
 	"name": "MeowClient",
 	"creator": "sAPv",
 	"description": "no myau",
-	"version": "250421",
+	"version": "250424",
 	"entry": "index.js",
 	"requires": [
         "BloomCore",
