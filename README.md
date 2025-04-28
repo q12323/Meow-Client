@@ -36,4 +36,4 @@
 4. Put MeowClient inside modules folder.
 5. use /ct reload ingame, now good to go!
 
-### Made By sAPv
+### Made By ~~sAPv~~ Yena
