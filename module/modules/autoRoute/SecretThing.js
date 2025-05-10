@@ -1,3 +1,4 @@
+import { HotbarSwapper } from "../../../utils/HotbarSwapper";
 import { McUtils } from "../../../utils/McUtils";
 import { Scheduler } from "../../../utils/Scheduler";
 import { SkyblockUtils } from "../../../utils/SkyblockUtils";
@@ -7,38 +8,35 @@ const SecretPickupEvent = Java.type("me.odinmain.events.impl.SecretPickupEvent")
 //const DungeonUtils = Java.type("import me.odinmain.utils.skyblock.dungeon.DungeonUtils");
 const RoomEnterEvent = Java.type("me.odinmain.events.impl.RoomEnterEvent");
 const C09PacketHeldItemChange = Java.type("net.minecraft.network.play.client.C09PacketHeldItemChange");
+const MCItemStack = Java.type("net.minecraft.item.ItemStack");
 
 // if (!DungeonUtils.mimicKilled) 
 
 export const SecretThing = new class {
     constructor() {
-        this.isFake = false;
         this.secretClicked = false;
         this.isListening = false;
-
-        this.lastC08 = 0;
-        this.c08SendDelay = 200;
-
         this.registerTrapChest = false;
 
+        this.didTickPassed = true;
+        this.lastC08 = 0;
+        this.c08SendDelay = 200;
         this.didMatched = false;
 
         this.secretListener = register("PacketSent", (packet, event) => {
             if (event.isCanceled()) return;
 
-            if (this.isFake) {
-                this.isFake = false;
-                return;
-            }
+            this.lastC08 = Date.now();
+            this.didTickPassed = false;
+            Scheduler.scheduleLowestPostTickTask(() => {
+                this.didTickPassed = true;
+            })
             
             const dir = packet.func_149568_f();
             if (dir === 255) {
                 this.didMatched = true;
-                this.lastC08 = 0;
-                return
+                return;
             }
-
-            this.lastC08 = Date.now();
             this.didMatched = false;
 
             const blockId = World.getBlockAt(new BlockPos(packet.func_179724_a())).type.getID();
@@ -46,7 +44,11 @@ export const SecretThing = new class {
                 this.secretClicked = true;
                 Scheduler.schedulePostTickTask(() => {
                     if (!this.didMatched && SkyblockUtils.isInSkyblock()) {
+                        const itemStack = packet.func_149574_g();
+                        const synced = Player.getInventory().getItems()[HotbarSwapper.getCurrentPlayerItem()].getItemStack();
+                        if (!MCItemStack.func_77989_b(synced, itemStack)) return;
                         Client.sendPacket(new C08PacketPlayerBlockPlacement(packet.func_149574_g()));
+                        this.didMatched = true;
                     }
                 }, 0, -10)
             }
@@ -86,7 +88,6 @@ export const SecretThing = new class {
         this.batSecretListener.register();
         this.secretResetTrigger.register();
         this.c09Trigger.register();
-        this.isFake = false;
         this.clicked = 0;
         this.secretClicked = false;
         this.isListening = true;
@@ -103,12 +104,15 @@ export const SecretThing = new class {
     }
 
     sendUseItem() {
-        this.isFake = true;
         McUtils.sendUseItem();
     }
     
-    canSendC08() {
-        return Date.now() - this.lastC08 > this.c08SendDelay;
+    canSendC08() { // TODO: rename
+        return this.didMatched ? this.didTickPassed : Date.now() - this.lastC08 > this.c08SendDelay;
+    }
+
+    canSendPlaceC08() {
+        return this.didTickPassed;
     }
 
 }
