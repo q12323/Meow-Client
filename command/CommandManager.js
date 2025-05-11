@@ -13,6 +13,7 @@ import { RouteCommand } from "./commands/RouteCommand";
 import { ShowCommand } from "./commands/ShowCommand";
 import { ToggleCommand } from "./commands/ToggleCommand";
 import { WeaponCommand } from "./commands/WeaponCommand";
+import { SelfBanCommand } from "./commands/SelfBanCommand";
 
 const GuiChat = Java.type("net.minecraft.client.gui.GuiChat");
 const GuiTextField = Java.type("net.minecraft.client.gui.GuiTextField");
@@ -43,6 +44,7 @@ export const CommandManager = new class {
         this.add(new ShowCommand());
         this.add(new ToggleCommand());
         this.add(new WeaponCommand());
+        this.add(new SelfBanCommand());
 
         this.commandTrigger = register("PacketSent", (packet, event) => {
             message = packet.func_149439_c();
