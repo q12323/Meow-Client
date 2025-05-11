@@ -33,7 +33,9 @@ export class PearlClipRoute extends Route {
             for (let i = 0; i < 9; i++) {
                 if (items[i]?.getID() === 368) {
                     index = i;
+                    if (items[i].getName() !== "Spirit Leap") {
                     break;
+                    }
                 }
             }
         } catch (error) {
