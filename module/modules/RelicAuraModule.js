@@ -63,7 +63,7 @@ export class RelicAuraModule extends Module {
         this.lookStopper = new Set();
 
         this.triggers.add(register("PacketSent", (packet, event) => this.onC02PacketSent(packet, event)).setFilteredClass(C02PacketUseEntity).unregister())
-        this.triggers.add(register(TickEvent.ClientTickEvent, (event) => {
+        this.triggers.add(register(TickEvent.PlayerTickEvent, (event) => {
             this.onTick(event);
         }).unregister());
     }
@@ -141,7 +141,8 @@ export class RelicAuraModule extends Module {
     }
  
     onTick(event) {
-        if (event.phase !== TickEvent.Phase.END) return;
+        if (event.player !== Player.getPlayer()) return;
+        if (event.phase !== TickEvent.Phase.START) return;
         if (!this.isToggled()) return;
         const world = World.getWorld();
         if (!Player.getPlayer() || !world) return;

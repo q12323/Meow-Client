@@ -18,6 +18,8 @@ import { setBlockSmoothTp, setEtherwarpFix } from "./autoRoute/ZeroPingEtherwarp
 import { PropertyNumber } from "../../property/properties/PropertyNumber";
 import { Scheduler } from "../../utils/Scheduler"
 import { PropertyInteger } from "../../property/properties/PropertyInteger";
+import { EtherwarpTargetRoute } from "./autoRoute/route/routes/EtherwarpTargetRoute";
+import { TickShift } from "../../utils/TickShift";
 
 const mc = McUtils.mc;
 const MouseEvent = Java.type("net.minecraftforge.client.event.MouseEvent");
@@ -52,6 +54,7 @@ export class AutoRouteModule extends Module {
     static color = new PropertyString("color", "CUSTOM", ["HUD", "CUSTOM"]);
     static customColor = new PropertyRgb("custom-color", "FF80FF");
     static depth = new PropertyBoolean("depth", false);
+    static renderLine = new PropertyBoolean("render-line", true);
     static editMode = new PropertyBoolean("edit-mode", false);
     static rotation = new PropertyBoolean("rotation", false);
     static noSmoothTp = new PropertyBoolean("no-smooth-tp", false);
@@ -61,9 +64,8 @@ export class AutoRouteModule extends Module {
     static swingToRetry = new PropertyBoolean("swing-to-retry", true);
     static ignoreMimicChest = new PropertyBoolean("ignore-mimic-chest", true);
     static zeroTick = new PropertyBoolean("zero-tick", false);
-    static throttleTps = new PropertyNumber("throttle-tps", 15, 2, 20);
-    static releaseTps = new PropertyNumber("release-tps", 21, 20, 100);
-    static maxShiftedTicks = new PropertyInteger("max-shifted-ticks", 5, 1, 10);
+    static throttleTps = new PropertyNumber("throttle-tps", 15, 0, 20);
+    static maxShiftedTicks = new PropertyInteger("max-shifted-ticks", 5, 1, 15);
 
     static selectedBlock = 0;
 
@@ -90,6 +92,14 @@ export class AutoRouteModule extends Module {
             setEtherwarpFix(value);
         })
 
+        AutoRouteModule.renderLine.onProperty((value) => {
+            EtherwarpTargetRoute.renderLine = value;
+        })
+
+        AutoRouteModule.maxShiftedTicks.onProperty((value) => {
+            TickShift.maxShiftedTicks = value;
+        })
+
 
         
         this.mouseOver = null;
@@ -103,6 +113,12 @@ export class AutoRouteModule extends Module {
         
         this.triggers.add(register("RenderWorld", (partialTicks) => this.onRenderWorld(partialTicks)).unregister());
         this.triggers.add(register(MouseEvent, (event) => this.onMouseEvent(event)).unregister());
+
+        register("Command", () => {
+            let queue = this.getRoutesQueue();
+            queue = queue.map(route => route.getJsonObject());
+            ChatLib.chat(JSON.stringify(queue));
+        }).setName("meowroutedebug")
     }
 
     setToggled(toggled) {
@@ -139,28 +155,25 @@ export class AutoRouteModule extends Module {
 
         const routesQueue = this.getRoutesQueue();
         if (routesQueue.length === 0) return;
-        // ChatLib.chat(routesQueue.map(r => r.type).toString())
         McUtils.setVelocity(0, Player.getMotionY(), 0);
         unpressMoveKeys();
 
-        routesQueue[0].run();
+        let lastActivatedRoute = null;
+        while (routesQueue.length) {
+            lastActivatedRoute = routesQueue.shift();
+            let canRunNext = lastActivatedRoute.run();
+            if (!canRunNext) break;
+        }
         if (!AutoRouteModule.zeroTick.getValue()) return;
-        if (!routesQueue[0].activated && routesQueue[0].awaitSecret && !SecretThing.secretClicked) {
-            Scheduler.scheduleLowestPostTickTask(() => {
-                let tps = AutoRouteModule.throttleTps.getValue();
-                if (tps === 20) return;
-                const timer = timerField.get(mc);
-                if (!timer) {
-                    AutoRouteModule.zeroTick.setValue(false);
-                    ChatUtils.prefixChat("remove oringo for zerotick")
-                    return;
-                }
-                const elapsedTicks = timer.field_74280_b;
-                if (elapsedTicks >= AutoRouteModule.maxShiftedTicks.getValue()) tps = AutoRouteModule.releaseTps.getValue();
-                const tick = 1000 / tps;
-                const escape = pretick + tick;
-                while (Date.now() < escape) {}
-            });
+        if (lastActivatedRoute.type === "use_item") {
+            timerField.get(mc).field_74280_b = 0;
+        }
+        if (!lastActivatedRoute.activated && !lastActivatedRoute.args.canExecute()) {
+            TickShift.setShiftingTps(AutoRouteModule.throttleTps.getValue());
+
+        } else {
+            TickShift.release();
+            ChatLib.chat("released " + TickShift.shiftedTicks);
         }
     }
 
@@ -180,9 +193,9 @@ export class AutoRouteModule extends Module {
             }
         }
 
-        routesQueue.sort((a, b) => a.priorty - b.priority);
+        routesQueue.sort((a, b) => b.priority - a.priority);
 
-        return routesQueue || [];
+        return routesQueue;
     }
 
     isMoving() {
@@ -264,7 +277,7 @@ export class AutoRouteModule extends Module {
     }
 
     getRealCoords(route) {
-        const coords = RoomUtils.getRealCoords(route.x, route.y, route.z);
+        const coords = route.getRealCoords();
         return [coords[0], coords[1], coords[2]];
     }
 

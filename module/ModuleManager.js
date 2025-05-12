@@ -27,6 +27,7 @@ import { VelocityModule } from "./modules/VelocityModule";
 import { XFlipModule } from "./modules/XFlipModule";
 import { ZFlipModule } from "./modules/ZFlipModule";
 import { TriggerBotModule } from "./modules/TriggerBotModule";
+import { WaterBoardModule } from "./modules/WaterBoardModule";
 
 export const ModuleManager = new class {
 	
@@ -60,6 +61,7 @@ export const ModuleManager = new class {
 		// this.add(new TNTAuraModule());
 		this.add(new TriggerBotModule());
 		this.add(new VelocityModule());
+		this.add(new WaterBoardModule());
 		this.add(new XFlipModule());
 		this.add(new ZFlipModule());
 

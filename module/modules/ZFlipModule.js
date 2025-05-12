@@ -7,7 +7,7 @@ export class ZFlipModule extends Module {
     }
 
     setToggled(toggled) {
-        RoomUtils.zFlip = toggled;
+        // RoomUtils.zFlip = toggled;
         super.setToggled(toggled);
     }
 }

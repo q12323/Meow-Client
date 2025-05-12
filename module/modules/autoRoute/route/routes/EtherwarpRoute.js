@@ -11,11 +11,9 @@ import { doZeroPingEtherwarp } from "../../ZeroPingEtherwarp";
 import { Route } from "../Route";
 import { SilentRotationHandler } from "../SilentRotationHandler";
 
-const keybindSneak = KeyBindingUtils.gameSettings.field_74311_E;
-
 export class EtherwarpRoute extends Route {
-    constructor(room, x, y, z, awaitSecret, yaw, pitch) {
-        super("etherwarp", room, x, y, z, awaitSecret, 0);
+    constructor(room, x, y, z, args, yaw, pitch) {
+        super("etherwarp", room, x, y, z, args, 0);
         this.yaw = Number(yaw);
         this.pitch = Number(pitch);
         if (isNaN(this.yaw) || isNaN(this.pitch)) {
@@ -46,12 +44,13 @@ export class EtherwarpRoute extends Route {
             console.log("error while finding item in hotbar: " + error);
             index = -1;
         }
-
+        
         if (index === -1) {
             ChatUtils.prefixChat(`AutoRoute: No etherwarp item in your hotbar!`);
             this.activated = true;
             return;
         }
+        this.args.startDelay();
 
         McUtils.setSneaking(true);
 
@@ -64,28 +63,24 @@ export class EtherwarpRoute extends Route {
         
         Scheduler.schedulePostTickTask(() => {
             if (!Player.isSneaking()) return;
-            if (!keybindSneak.func_151470_d()) McUtils.setSneaking(false);
-            if (!SecretThing.canSendC08()) return;
 
-            if (this.awaitSecret && !SecretThing.secretClicked) return;
+            if (!this.args.canExecute()) return;
             
             if (!this.isHoldingEtherwarp()) {
                 const result = HotbarSwapper.changeHotbar(index);
                 if (!result) return;
             }
 
+            if (!SecretThing.canSendC08()) return;
             SecretThing.sendUseItem();
-            const wasSneaking = Player.isSneaking();
-            McUtils.setSneaking(true);
             doZeroPingEtherwarp();
-            McUtils.setSneaking(wasSneaking);
             this.activated = true;
             SecretThing.secretClicked = false;
+            this.args.clearDelayTimer();
         })
     }
 
     isHoldingEtherwarp() {
-        // return true
         const held = ItemUtils.getHeldItem();
         return held && (ChatLib.removeFormatting(held.getName()).includes("Aspect of the Void") || ChatLib.removeFormatting(held.getName()).includes("Aspect of the End"));
     }

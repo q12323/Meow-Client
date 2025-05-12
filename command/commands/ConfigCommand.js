@@ -34,7 +34,7 @@ export class ConfigCommand extends Command {
                 }
                 ChatUtils.chat(`${ChatUtils.PREFIX}Config has been loaded (&a&o${args[2]}&a&o.&a&ojson&r)`);
             } catch (error) {
-                console.error("error whlie loading config" + error);
+                console.log("error whlie loading config" + error);
                 ChatUtils.chat(`${ChatUtils.PREFIX}Config couldn't be loaded (&c&o${args[2]}&c&o.&c&ojson&r)`);
             }
 

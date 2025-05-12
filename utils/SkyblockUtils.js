@@ -13,7 +13,12 @@ export class SkyblockUtils {
             SkyblockUtils.inSkyblock = false;
             return;
         }
-        SkyblockUtils.inSkyblock = ChatLib.removeFormatting(Scoreboard.getTitle()).includes("SKYBLOCK");
+        try {
+            SkyblockUtils.inSkyblock = ChatLib.removeFormatting(Scoreboard.getTitle()).includes("SKYBLOCK");
+        } catch (error) {
+            console.log(`error while checking skyblock: ${error}`);
+            SkyblockUtils.inSkyblock = false;
+        }
     }).unregister();
 
     static isInSkyblock() {

@@ -36,11 +36,11 @@ const itemList = [
     "SHADOW_FURY",
   
     "SECOND_MASTER_STAR",
-    "SPIRIT_WING",
-    "SPIRIT_BONE",
-    
+  
     "FIRST_MASTER_STAR",
-    "SCARF_STUDIES"
+    "SCARF_STUDIES",
+    "SPIRIT_WING",
+    "SPIRIT_BONE"
 ]
 
 const RNG_WINDOWS = [
@@ -58,16 +58,13 @@ export class RareDropModule extends Module {
         super("RareDrop", false, 0, false);
         
         this.triggers.add(register("WorldLoad", () => this.onWorldLoad()).unregister());
-        this.triggers.add(register("PacketReceived", () => this.onClose()).setFilteredClass(C0DPacketCloseWindow).unregister());
-        this.triggers.add(register("PacketReceived", () => this.onClose()).setFilteredClass(S2EPacketCloseWindow).unregister());
-        this.triggers.add(register("PacketReceived", (packet) => this.onWindowOpen(packet)).setFilteredClass(S2DPacketOpenWindow).unregister());
-        this.triggers.add(register("PacketReceived", (packet) => {
+        this.triggers.add(register("Tick", () => {
             try {
-                this.onItems(packet)
+                this.onTick();
             } catch (err) {
                 this.reportError(err);
             }
-        }).setFilteredClass(S30PacketWindowItems).unregister())
+        }).unregister())
         
         request({
             url: "https://api.meowclient.cloud/v1/meow/rng",
@@ -80,49 +77,42 @@ export class RareDropModule extends Module {
             this.reportError(err);
         });
 
-        this.currentWindowId = -1;
         this.reportedRngs = new Set();
 
     }
 
     setToggled(toggled) {
-        this.onclose();
+        this.onWorldLoad();
         super.setToggled(toggled);
     }
 
     reportError(err) {
         APIUtils.reportError(err);
+        this.setToggled(false);
     }
 
     onWorldLoad() {
         this.reportedRngs.clear();
     }
 
-    onWindowOpen(packet) {
-        if (packet.func_148902_e() !== "minecraft:chest" || !RNG_WINDOWS.includes(ChatLib.removeFormatting(packet.func_179840_c().func_150254_d()))) {
-            this.onclose();
-            return;
-        }
-        this.currentWindowId = packet.func_148901_c();
-    }
+    onTick() {
+        if (!this.isToggled()) return;
+        const container = Player.getContainer();
+        if (!container.isContainer()) return;
+        if (!RNG_WINDOWS.includes(container.getName())) return;
 
-    onClose() {
-        this.currentWindowId = -1;
-    }
-
-    onItems(packet) {
-        if (this.currentWindowId === packet.func_148911_c()) return;
-        const items = packet.func_148910_d();
+        const items = container.getItems();
+        if (items.length !== 90) return;
 
         let priceItem = items[31]
         if (!priceItem) return; 
-        priceItem = new Item(priceItem);
         let priceLoreIndex = priceItem.getLore().findIndex(line => line === "§5§o§7Cost");
         if (priceLoreIndex === -1) return;
-        const cost = parseInt(priceItem.getLore()[index+1].removeFormatting().replace(/\D/g, ""));
-        for (let item of items) {
+        const cost = parseInt(priceItem.getLore()[priceLoreIndex+1].removeFormatting().replace(/\D/g, ""));
+
+        for (let i = 9; i < 18; i++) {
+            let item = items[i];
             if (!item) continue;
-            item = new Item(item); // convert to ct item to use unobfuscated methods
             let itemId = ItemUtils.getSkyblockItemID(item);
             if (!itemId) continue;
             if (this.reportedRngs.has(itemId)) continue;
@@ -183,4 +173,4 @@ export class RareDropModule extends Module {
 
 }
 
-//Special Thanks to Trimonu 
+//Special Thanks to Snowyy

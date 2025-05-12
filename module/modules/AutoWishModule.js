@@ -109,11 +109,16 @@ export class AutoWishModule extends Module {
 
     setToggled(toggled) {
         const name = Player.getName();
-        let index = TabList?.getNames()?.findIndex((line) => {
-            line = ChatLib.removeFormatting(line);
-            if (!line.includes(name)) return false;
-            return line.match(/^\[\d+\] .+ \(Healer .+\)$/);
-        });
+        let index = -1;
+        try {
+            index = TabList?.getNames()?.findIndex((line) => {
+                line = ChatLib.removeFormatting(line);
+                if (!line.includes(name)) return false;
+                return line.match(/^\[\d+\] .+ \(Healer .+\)$/);
+            });
+        } catch (error) {
+            index = -1;
+        }
 
         this.isHealer = !isNaN(index) && index !== -1;
         this.classUpdated = false;

@@ -123,7 +123,7 @@ export const Scheduler = new class {
         }).unregister();
 
         this.c03Trigger = register("PacketSent", (packet, event) => {
-            this.scheduledC03Tasks(packet, event);
+            this.scheduledC03Tasks.doTasks(packet, event);
         }).setFilteredClass(C03PacketPlayer).unregister();
     }
 
@@ -179,5 +179,6 @@ export const Scheduler = new class {
         this.lowS08Trigger.register();
         this.livingUpdateTrigger.register();
         this.playerTickTrigger.register();
+        this.c03Trigger.register();
     }
 }

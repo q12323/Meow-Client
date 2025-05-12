@@ -1,8 +1,5 @@
-// import { PropertyBoolean } from "../../property/properties/PropertyBoolean";
-// import { PropertyNumber } from "../../property/properties/PropertyNumber";
 import { PropertyString } from "../../property/properties/PropertyString";
 import { PropertyInteger } from "../../property/properties/PropertyInteger";
-import { ChatUtils } from "../../utils/ChatUtils";
 import { McUtils } from "../../utils/McUtils";
 import { SkyblockUtils } from "../../utils/SkyblockUtils";
 import { Module } from "../Module";
@@ -12,6 +9,7 @@ import { PropertyBoolean } from "../../property/properties/PropertyBoolean";
 
 const mc = McUtils.mc;
 const GuiChat = Java.type("net.minecraft.client.gui.GuiChat");
+const TickEvent = Java.type("net.minecraftforge.fml.common.gameevent.TickEvent");
 
 const Forward = KeyBindingUtils.gameSettings.field_74351_w;
 const Left = KeyBindingUtils.gameSettings.field_74370_x;
@@ -42,7 +40,7 @@ export class IceFillModule extends Module {
         this.timer = 0;
 
         this.triggers.add(register("WorldLoad", () => this.onWorldLoad()).unregister());
-        this.triggers.add(register("Tick", () => this.onTick()).unregister());
+        this.triggers.add(register(TickEvent.PlayerTickEvent, (event) => this.onTick(event)).unregister());
     }
 
     setToggled(toggled) {
@@ -56,7 +54,12 @@ export class IceFillModule extends Module {
         this.resetPath();
     }
 
-    onTick() {
+    onTick(event) {
+        if (event.phase !== TickEvent.Phase.START) return;
+        const entity = event.player;
+        if (entity === null) return;
+        if (entity !== Player.getPlayer()) return;
+        if (event.isCanceled()) return;
         if (!this.isToggled()) return;
         if (!SkyblockUtils.isInSkyblock()) return;
         if (RoomUtils.getCurrentRoomName() !== "Ice Fill") return;

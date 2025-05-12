@@ -16,10 +16,10 @@ export const HotbarSwapper = new class {
 
         const onLowestPostTick = () => {
             this.didSentChangePacket = false;
-            Scheduler.scheduleLowestPostTickTask(onLowestPostTick, 1, -100);
+            Scheduler.scheduleLowestPostTickTask(() => onLowestPostTick(), 1, -100);
         };
         onLowestPostTick();
-        this.c09PacketSent = register("PacketSent", this.onHeldItemChangePacket).setFilteredClass(C09PacketHeldItemChange);
+        this.c09PacketSent = register("PacketSent", () => this.onHeldItemChangePacket()).setFilteredClass(C09PacketHeldItemChange);
     }
 
     /**

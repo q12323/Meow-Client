@@ -58,7 +58,7 @@ export class Module {
             this.setKey(json.key);
             this.setHidden(json.hidden);
         } catch (error) {
-            console.log(`error while loading module ${this.getName()} from config: ${error}`);
+            console.log(`error while loading module ${this.getName()} from config: ${error}\n${error?.getStackTrace() || error.stack}`);
             this.setDefaultToggled();
             this.setDefaultKey();
             this.setDefaultHidden();
@@ -122,15 +122,19 @@ export class Module {
     }
 
     register() {
-        for (let trriger of this.triggers) {
-            trriger.register();
-        }
+        Client.getMinecraft().func_152344_a(() => {
+            for (let trriger of this.triggers) {
+                trriger.register();
+            }
+        })
     }
 
     unregister() {
-        for (let trigger of this.triggers) {
-            trigger.unregister();
-        }
+        Client.getMinecraft().func_152344_a(() => {
+            for (let trriger of this.triggers) {
+                trriger.unregister();
+            }
+        })
     }
 
     getKey() {

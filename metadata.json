@@ -1,11 +1,11 @@
 {
-	"name": "MeowClient",
-	"creator": "sAPv",
-	"description": "no myau",
-	"version": "250510",
-	"entry": "index.js",
-	"requires": [
+    "name": "MeowClient",
+    "creator": "sAPv",
+    "description": "no myau",
+    "version": "250512",
+    "entry": "index.js",
+    "requires": [
         "BloomCore",
-		"requestV2"
+        "requestV2"
     ]
 }

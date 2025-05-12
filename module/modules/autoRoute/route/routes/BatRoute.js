@@ -11,14 +11,14 @@ import { doZeroPingAotv } from "../../ZeroPingEtherwarp";
 const EntityBat = Java.type("net.minecraft.entity.passive.EntityBat");
 
 export class BatRoute extends Route {
-    constructor(room, x, y, z, awaitSecret, yaw, pitch, targetX, targetY, targetZ) {
-        super("bat", room, x, y, z, awaitSecret, 2);
+    constructor(room, x, y, z, args, yaw, pitch, targetX, targetY, targetZ) {
+        super("bat", room, x, y, z, args, 2);
         this.yaw = Number(yaw);
         this.pitch = Number(pitch);
         this.targetX = Number(targetX);
         this.targetY = Number(targetY);
         this.targetZ = Number(targetZ);
-        if (isNaN(this.targetX) || isNaN(this.targetY) || isNaN(this.targetZ)) this.isZeroping = false;
+        if (isNaN(this.targetX) || isNaN(this.targetY) || isNaN(this.targetZ) || (!this.targetX && !this.targetY && !this.targetZ)) this.isZeroping = false;
         else this.isZeroping = true;
         if (isNaN(this.yaw) || isNaN(this.pitch)) {
             this.delete();
@@ -31,9 +31,11 @@ export class BatRoute extends Route {
         const obj = super.getJsonObject(json);
         obj.data.yaw = this.yaw;
         obj.data.pitch = this.pitch;
-        obj.data.x = this.targetX;
-        obj.data.y = this.targetY;
-        obj.data.z = this.targetZ;
+        if (this.isZeroping) {
+            obj.data.x = this.targetX;
+            obj.data.y = this.targetY;
+            obj.data.z = this.targetZ;
+        }
         return obj;
     }
 
@@ -61,6 +63,7 @@ export class BatRoute extends Route {
             this.activated = true;
             return;
         }
+        this.args.startDelay();
 
         const yaw = RoomUtils.getRealYaw(this.yaw);
         const pitch = this.pitch;
@@ -69,17 +72,19 @@ export class BatRoute extends Route {
         SilentRotationHandler.doSilentRotation();
         McUtils.setAngles(rotations[0], rotations[1]);
 
-        if (this.awaitSecret && !SecretThing.secretClicked) return;
-        if (!this.isBatInRange() && !this.forceBat) return;
-
-        const isHoldingItem = Player.getHeldItemIndex() === index;
-        if (!isHoldingItem) {
-            const result = HotbarSwapper.changeHotbar(index);
-            if (!result) return;
-        }
-
         Scheduler.schedulePostTickTask(() => {
+
+            if (!this.args.canExecute()) return;
+            if (!this.isBatInRange() && !this.forceBat) return;
+    
+            const isHoldingItem = Player.getHeldItemIndex() === index;
+            if (!isHoldingItem) {
+                const result = HotbarSwapper.changeHotbar(index);
+                if (!result) return;
+            }
+            
             if (!SecretThing.canSendC08()) return;
+            
             SecretThing.sendUseItem();
             if (this.isZeroping) {
                 let targetPos = RoomUtils.getRealBlockPos(new BlockPos(this.targetX, this.targetY, this.targetZ).toMCBlock());
@@ -89,6 +94,7 @@ export class BatRoute extends Route {
             }
             this.activated = true;
             SecretThing.secretClicked = false;
+            this.args.clearDelayTimer();
         });
 
     }

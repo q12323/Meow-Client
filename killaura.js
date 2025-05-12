@@ -5,6 +5,8 @@ import { McUtils } from "./utils/McUtils";
 import { Scheduler } from "./utils/Scheduler";
 import { SkyblockUtils } from "./utils/SkyblockUtils";
 
+const KillauraHelper = Java.type("cloud.meowclient.meowct.KillauraHelper");
+
 const targets = [
     "Fledgling ",
     "Bloodfiend ",
@@ -56,12 +58,12 @@ register("Tick", () => {
         switch (currentImpel) {
             case "UP":
                 ChatLib.chat("UP")
-                forceImpelPitches = [-90, -90, -90, -90, -90, -90, -90, -90, -90, -90];
+                forceImpelPitches = [-180, -180, -180, -180, -180, -180, -180, -180, -180, -180];
                 break;
 
             case "DOWN":
                 ChatLib.chat("DOWN")
-                forceImpelPitches = [90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90];
+                forceImpelPitches = [180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180];
                 break;
 
             case "JUMP":
@@ -90,7 +92,7 @@ register("Tick", () => {
     let yaw, pitch;
 
     if (forceImpelPitches.length) {
-        yaw = lastlook[0];
+        yaw = 0;
         pitch = forceImpelPitches.shift();
         KeyBindingUtils.setRightClick(true);
         KeyBindingUtils.setRightClick(false);
@@ -112,18 +114,15 @@ register("Tick", () => {
         angles[1] *= 1 - Math.random() * 0.1;
         angles[0] = MathLib.clamp(angles[0], -angleStep, angleStep);
         angles[1] = MathLib.clamp(angles[1], -angleStep, angleStep);
-        angles[0] = applyGcd(angles[0]);
-        angles[1] = applyGcd(angles[1]);
-        yaw = lastlook[0] + angles[0];
-        pitch = lastlook[1] + angles[1];
+        yaw = angles[0];
+        pitch = angles[1];
     }
     if (isNaN(yaw) || isNaN(pitch)) return;
-    if (Math.abs(pitch) > 90) {
-        ChatLib.chat(`${yaw} ${pitch}`);
-        return;
-    }
+
     const result = SilentRotationHandler.doSilentRotation();
-    McUtils.setRotations(yaw, pitch);
+    const thePlayer = Player.getPlayer();
+    // McUtils.setRotations(yaw, pitch);
+    const rotateResult = killauraSafeRotate(yaw, pitch);
 
     const travelled = getTravelledBlocks(swingRange);
 
@@ -146,7 +145,6 @@ register("Tick", () => {
     }
 
     let s08Received = false;
-    const thePlayer = Player.getPlayer();
 
     Scheduler.scheduleC03Task(() => s08Received = true);
 
@@ -186,17 +184,6 @@ register("Tick", () => {
 
 }).unregister().setPriority(Priority.LOW)
 
-function applyGcd(value) {
-    let sens = toFloat(Client.getMinecraft().field_71474_y.field_74341_c * toFloat(0.6) + toFloat(0.2));
-    let gcd = toFloat(sens * sens * sens * toFloat(1.2));
-    return toFloat(value - value % gcd);
-}
-
-function toFloat(value) {
-    const Float = Java.type("java.lang.Float");
-    return new Float(value).doubleValue();
-}
-
 register("Command", () => {
     toggled = !toggled;
     ChatUtils.prefixChat("killaura " + (toggled ? "on" : "off") + "!");
@@ -218,7 +205,7 @@ function getTarget() {
         if (e.getEntity().func_70115_ae()) return; // isRiding
         const name = e.getName();
         if (!targets.includes(name)) return;
-        // if (e.getEntity() === Player.getPlayer()) return;
+        if (e.getEntity() === Player.getPlayer()) return;
 
         const entityInfo = getValidEntityInfo(e.getEntity(), eyePos);
         if (!entityInfo) return;
@@ -340,9 +327,7 @@ function rayTraceBlocks(vec0, vec1) {
 
     while (true) {
 
-        if (Date.now() - date > 1000) return;
-    
-        // let c = Math.min(tMaxX, tMaxY, tMaxZ);
+        if (Date.now() - date > 1000) return travelled;
 
         if (tMaxX < tMaxY && tMaxX < tMaxZ) {
             x += stepX;
@@ -357,40 +342,13 @@ function rayTraceBlocks(vec0, vec1) {
 
         travelled.push([x, y, z]);
 
-        // if (McUtils.getBlock(x, y, z).type.getID() !== 0) break;
-
         if (end[0] === x && end[1] === y && end[2] === z) break;
-
-        // if (McUtils.getBlock(x, y, z)?.type?.getID() !== 0) {
-
-        //     let hit = [
-        //         eyeX + dx * c,
-        //         eyeY + dy * c,
-        //         eyeZ + dz * c
-        //     ].map(coord => Math.round(coord * 1e10) * 1e-10);
-        //     return hit;
-        // }
     }
 
     return travelled;
 
 }
 
-register("Command", () => {
-    const eye = Player.asPlayerMP().getEyePosition(1);
-    const look = Player.asPlayerMP().getLookVector(1);
-    const range = 4.5;
-    let vec1 = eye;
-    let vec2 = eye.func_72441_c(look.field_72450_a * range, look.field_72448_b * range, look.field_72449_c * range);
-    vec1 = McUtils.getArrayFromVec3(vec1);
-    vec2 = McUtils.getArrayFromVec3(vec2);
-    const result = rayTraceBlocks(vec1, vec2);
-    ChatLib.chat(result.map(v => `[${v[0]}, ${v[1]}, ${v[2]}]`).join("\n"))
-}).setName("ray")
-
-register("Command", () => {
-    console.time("targets")
-    const targets = getTarget();
-    console.timeEnd("targets")
-    ChatLib.chat(targets.map(a => `[${a.entity.getName()} ${a.lastAttack} ${a.distance}]`).join("\n"))
-}).setName("getTargets");
+function killauraSafeRotate(yaw, pitch) {
+    KillauraHelper.safeRotate(yaw, pitch);
+}

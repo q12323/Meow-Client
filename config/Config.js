@@ -56,7 +56,7 @@ export const ConfigClass = new class {
 					overrideConfig = true;
 				}
 			} catch (error) {
-				console.log(`error while loading module ${module.getName()} from config: ${error}`);
+				console.log(`error while loading module ${module.getName()} from config: ${error}\n${error?.getStackTrace() || error.stack}`);
 				overrideConfig = true;
 			}
 		}

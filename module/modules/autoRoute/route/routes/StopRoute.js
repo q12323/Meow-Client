@@ -2,8 +2,8 @@ import { KeyBindingUtils } from "../../../../../utils/KeyBindingUtils";
 import { Route } from "../Route";
 
 export class StopRoute extends Route {
-    constructor(room, x, y, z, awaitSecret) {
-        super("stop", room, x, y, z, awaitSecret, 10);
+    constructor(room, x, y, z, args) {
+        super("stop", room, x, y, z, args, 10);
 
     }
 
@@ -21,5 +21,7 @@ export class StopRoute extends Route {
         KeyBindingUtils.setKeyState(Right, false);
 
         this.activated = true;
+        this.args.clearDelayTimer();
+        return true;
     }
 }

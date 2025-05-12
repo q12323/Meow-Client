@@ -12,7 +12,7 @@ import { SilentRotationHandler } from "../SilentRotationHandler";
 
 export class AotvRoute extends Route {
     constructor(room, x, y, z, awaitSecret, yaw, pitch, targetX, targetY, targetZ) {
-        super("aotv", room, x, y, z, awaitSecret, 0.9);
+        super("aotv", room, x, y, z, awaitSecret, 0.5);
         this.yaw = Number(yaw);
         this.pitch = Number(pitch);
         this.targetX = Number(targetX);
@@ -22,6 +22,8 @@ export class AotvRoute extends Route {
             this.delete();
             throw new Error("yaw, pitch, targetX, y or z is not valid");
         }
+
+        this.name = "aotv";
     }
 
     getJsonObject(json) {
@@ -55,8 +57,7 @@ export class AotvRoute extends Route {
             this.activated = true;
             return;
         }
-
-        this.unpressSneakKey();
+        this.args.startDelay();
 
         const yaw = RoomUtils.getRealYaw(this.yaw);
         let targetPos = RoomUtils.getRealBlockPos(new BlockPos(this.targetX, this.targetY, this.targetZ).toMCBlock());
@@ -65,34 +66,29 @@ export class AotvRoute extends Route {
         SilentRotationHandler.doSilentRotation();
         McUtils.rotate(yaw + (Ticker.getTick() % 2 * 2 - 1) * 1e-6, this.pitch);
 
-        if (Player.getX() - Math.floor(Player.getX()) !== 0.5 || Player.getZ() - Math.floor(Player.getZ()) !== 0.5) return;
-
-        if (this.awaitSecret && !SecretThing.secretClicked) return;
-
-        if (Player.isSneaking()) return;
-
-        if (!this.isRouteItem()) {
-            const result = HotbarSwapper.changeHotbar(index);
-            if (!result) return;
-        }
-
+        if (Math.abs(Player.getX() - Math.floor(Player.getX()) - 0.5) > 1e-2 || Math.abs(Player.getZ() - Math.floor(Player.getZ()) - 0.5) > 1e-2) return;
+        McUtils.setSneaking(false);
+        
         Scheduler.schedulePostTickTask(() => {
             const offsetY = Player.getY() - Math.floor(Player.getY());
             if (offsetY !== 0) return
+            
+            if (!this.args.canExecute()) return;
+
+            if (!this.isRouteItem()) {
+                const result = HotbarSwapper.changeHotbar(index);
+                if (!result) return;
+            }
+            
             if (!SecretThing.canSendC08()) return;
             SecretThing.sendUseItem();
-
+            
             doZeroPingAotv(targetPos[0], targetPos[1], targetPos[2]);
             this.activated = true;
             SecretThing.secretClicked = false;
+            this.args.clearDelayTimer();
         })
 
-
-    }
-
-    unpressSneakKey() {
-        // KeyBindingUtils.setKeyState(KeyBindingUtils.gameSettings.field_74311_E.func_151463_i(), false);
-        McUtils.setSneaking(false);
     }
 
     isRouteItem(item = ItemUtils.getHeldItem()) {

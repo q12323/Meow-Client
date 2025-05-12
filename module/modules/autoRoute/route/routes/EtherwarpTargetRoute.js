@@ -16,8 +16,11 @@ const keybindSneak = KeyBindingUtils.gameSettings.field_74311_E;
 const sneakHeight = 1.5399999618530273;
 
 export class EtherwarpTargetRoute extends Route {
-    constructor(room, x, y, z, awaitSecret, targetX, targetY, targetZ) {
-        super("etherwarp_target", room, x, y, z, awaitSecret, 0);
+
+    static renderLine = true;
+
+    constructor(room, x, y, z, args, targetX, targetY, targetZ) {
+        super("etherwarp_target", room, x, y, z, args, 0);
         this.targetX = Number(targetX);
         this.targetY = Number(targetY);
         this.targetZ = Number(targetZ);
@@ -56,6 +59,7 @@ export class EtherwarpTargetRoute extends Route {
             this.activated = true;
             return;
         }
+        this.args.startDelay();
 
         const targetCoords = RoomUtils.getRealCoords(this.targetX, this.targetY, this.targetZ);
 
@@ -67,10 +71,8 @@ export class EtherwarpTargetRoute extends Route {
         
         Scheduler.schedulePostTickTask(() => {
             if (!Player.isSneaking()) return;
-            if (!keybindSneak.func_151470_d()) McUtils.setSneaking(false);
-            if (!SecretThing.canSendC08()) return;
 
-            if (this.awaitSecret && !SecretThing.secretClicked) return;
+            if (!this.args.canExecute()) return;
     
             const lastPos = McUtils.getLastReportedPos();
             const lastLook = McUtils.getLastReportedRotations();
@@ -85,47 +87,48 @@ export class EtherwarpTargetRoute extends Route {
                 const result = HotbarSwapper.changeHotbar(index);
                 if (!result) return;
             }
+            
+            if (!SecretThing.canSendC08()) return;
 
             SecretThing.sendUseItem();
-            const wasSneaking = Player.isSneaking();
-            McUtils.setSneaking(true);
             doZeroPingEtherwarp();
-            McUtils.setSneaking(wasSneaking);
             this.activated = true;
             SecretThing.secretClicked = false;
+            this.args.clearDelayTimer();
         })
     }
 
     isHoldingEtherwarp() {
-        // return true
         const held = ItemUtils.getHeldItem();
         return held && (ChatLib.removeFormatting(held.getName()).includes("Aspect of the Void") || ChatLib.removeFormatting(held.getName()).includes("Aspect of the End"));
     }
 
     doRender(depth, color) {
         const coords = super.doRender(depth, color);
-        const targetCoords = RoomUtils.getRealCoords(this.targetX, this.targetY, this.targetZ);
-        GlStateManager.func_179094_E(); // pushMatrix
-        if (!depth) GlStateManager.func_179097_i(); // disableDepth
-        GlStateManager.func_179137_b(-Player.getRenderX(), -Player.getRenderY(), -Player.getRenderZ());
-        GlStateManager.func_179090_x(); // disableTexture2D
-        GlStateManager.func_179147_l(); // enableBlend
-        GL11.glBlendFunc(770, 771);
-        RenderUtils.glColor(color);
-        GL11.glEnable(2848);
-
-        GL11.glBegin(GL11.GL_LINES);
-        GL11.glVertex3d(coords[0], coords[1] + 0.05, coords[2]);
-        // GL11.glVertex3d(Math.floor(targetCoords[0]) + 0.5, Math.floor(targetCoords[1]) + 0.05, Math.floor(targetCoords[2]) + 0.5);
-        GL11.glVertex3d(targetCoords[0], targetCoords[1], targetCoords[2]);
-
-        GL11.glEnd();
-        RenderUtils.glResetColor();
-        GL11.glDisable(2848);
-        GlStateManager.func_179084_k(); // disableBlend
-        GlStateManager.func_179098_w(); // enableTexture2D
-        if (!depth) GlStateManager.func_179126_j(); // enableDepth
-        GlStateManager.func_179121_F(); // popMatrix
+        if (EtherwarpTargetRoute.renderLine) {
+            const targetCoords = RoomUtils.getRealCoords(this.targetX, this.targetY, this.targetZ);
+            GlStateManager.func_179094_E(); // pushMatrix
+            if (!depth) GlStateManager.func_179097_i(); // disableDepth
+            GlStateManager.func_179137_b(-Player.getRenderX(), -Player.getRenderY(), -Player.getRenderZ());
+            GlStateManager.func_179090_x(); // disableTexture2D
+            GlStateManager.func_179147_l(); // enableBlend
+            GL11.glBlendFunc(770, 771);
+            RenderUtils.glColor(color);
+            GL11.glEnable(2848);
+    
+            GL11.glBegin(GL11.GL_LINES);
+            GL11.glVertex3d(coords[0], coords[1] + 0.05, coords[2]);
+            // GL11.glVertex3d(Math.floor(targetCoords[0]) + 0.5, Math.floor(targetCoords[1]) + 0.05, Math.floor(targetCoords[2]) + 0.5);
+            GL11.glVertex3d(targetCoords[0], targetCoords[1], targetCoords[2]);
+    
+            GL11.glEnd();
+            RenderUtils.glResetColor();
+            GL11.glDisable(2848);
+            GlStateManager.func_179084_k(); // disableBlend
+            GlStateManager.func_179098_w(); // enableTexture2D
+            if (!depth) GlStateManager.func_179126_j(); // enableDepth
+            GlStateManager.func_179121_F(); // popMatrix
+        }
         return coords;
     }
     

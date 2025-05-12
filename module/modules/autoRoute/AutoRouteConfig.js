@@ -51,7 +51,7 @@ export const AutoRouteConfig = new class {
                 RouteManager.addFromJsonObject(route);
             } catch (error) {
                 overrideConfig = true;
-                console.log(`error while loading autoroute ${name} ${error}`);
+                console.log(`error while loading autoroute ${name} ${error} \n${error?.stack}`);
             }
         }
 

@@ -7,7 +7,13 @@ import { SkyblockUtils } from "../../utils/SkyblockUtils";
 import { WeaponManager } from "../../weapon/WeaponManager";
 import { Module } from "../Module";
 
+const MovingObjectType = Java.type("net.minecraft.util.MovingObjectPosition$MovingObjectType");
 const Mouse = Java.type("org.lwjgl.input.Mouse");
+const PlayerControllerMP = Java.type("net.minecraft.client.multiplayer.PlayerControllerMP");
+const mc = McUtils.mc;
+
+const isHittingBlockField = PlayerControllerMP.class.getDeclaredField("field_78778_j");
+isHittingBlockField.setAccessible(true);
 
 export class AutoClickerModule extends Module {
     
@@ -16,6 +22,7 @@ export class AutoClickerModule extends Module {
     static weaponsOnly = new PropertyBoolean("weapons-only", true);
     static UUIDsOnly = new PropertyBoolean("uuids-only", true);
     static breakBlocks = new PropertyBoolean("break-blocks", true);
+    static breakBlocksDelay = new PropertyInteger("break-blocks-delay", 1, 0, 20);
     static skyblockOnly = new PropertyBoolean("skyblock-only", true);
     
     constructor() {
@@ -23,8 +30,8 @@ export class AutoClickerModule extends Module {
 
         this.randomCps = 0;
         this.lastClick = 0;
-        this.state = false;
-        this.pressed = false;
+        this.buttonDown = false;
+        this.ticksOverBlock = 0;
 
         AutoClickerModule.minCps.onProperty((value) => {
             if (value > AutoClickerModule.maxCps.getValue()) {
@@ -37,56 +44,73 @@ export class AutoClickerModule extends Module {
             }
         })
 
-        this.triggers.add(register("Step", () => this.onStep()).unregister());
+        this.triggers.add(register("Tick", () => this.onTick()).unregister());
+        this.triggers.add(register("RenderWorld", () => this.onRenderWorld()).unregister());
     }
 
     setToggled(toggled) {
         super.setToggled(toggled);
+        if (toggled) {
+            this.ticksOverBlock = 0;
+            this.setRandomCps();
+        } else {
+            if (!this.buttonDown) {
+                Mouse.poll();
+                if (Mouse.isButtonDown(0)) {
+                    KeyBindingUtils.setLeftClick(true);
+                }
+
+                this.buttonDown = true;
+            }
+        }
     }
 
-    onStep() {
+    onTick() {
+        if (!this.isToggled()) return;
+        if (mc.field_71439_g.field_70173_aa % 5 === 0) {
+            this.setRandomCps();
+        }
+
+        if (mc.field_71476_x !== null && mc.field_71476_x.field_72313_a === MovingObjectType.BLOCK) {
+            ++this.ticksOverBlock;
+        } else {
+            this.ticksOverBlock = 0;
+        }
+    }
+
+    onRenderWorld() {
         if (!this.isToggled()) return;
         if (AutoClickerModule.skyblockOnly.getValue() && !SkyblockUtils.isInSkyblock()) return;
-        Mouse.poll();
-
-        if (Mouse.isButtonDown(0)) {
-            if (this.state) {
-                this.pressed = false;
-            } else {
-                this.pressed = true;
-            }
-            this.state = true;
-        } else this.state = false;
-
-        const ms = Date.now();
-
-        if (this.pressed) {
-            this.setRandomCps();
-            this.lastClick = ms;
-            return;
-        }
+        if (mc.field_71439_g === null || mc.field_71441_e === null || mc.field_71462_r !== null) return;
         
-        const cps = this.getRandomCps();
-
-        if (ms - this.lastClick >= 1000 / cps) {
+        Mouse.poll();
+        if (Mouse.isButtonDown(0)) {
+            const cps = this.getRandomCps();
+            const ms = Date.now();
             if (this.canClick()) {
-                KeyBindingUtils.setLeftClick(false);
+                if (this.lastClick + 1000 / cps <= ms) {
+                    this.lastClick = ms;
+                    KeyBindingUtils.setLeftClick(true);
+                    this.buttonDown = true;
+                } else if (this.lastClick + 500 / cps <= ms) {
+                    KeyBindingUtils.setLeftClick(false);
+                    this.buttonDown = false;
+                }
+            } else if (!this.buttonDown) {
                 KeyBindingUtils.setLeftClick(true);
+                this.buttonDown = true;
             }
-            this.lastClick += 1000 / cps;
-            if (this.lastClick > ms) this.lastClick = ms;
-            this.setRandomCps();
+        } else if (!this.buttonDown) {
+            this.buttonDown = true;
         }
     }
 
     canClick() {
-        Mouse.poll();
-        if (!Mouse.isButtonDown(0)) return false;
-        if (McUtils.mc.field_71476_x === null) return false;
-        if (McUtils.mc.field_71476_x.field_72313_a === null) return false;
-        if (McUtils.mc.field_71462_r !== null) return false;
-        if (!this.isHoldingWeapon()) return false;
-        if ((AutoClickerModule.breakBlocks.getValue() && McUtils.mc.field_71476_x.field_72313_a == "BLOCK")) return false;
+        if (!this.isHoldingWeapon()) {
+            return false;
+        } else if (AutoClickerModule.breakBlocks.getValue() && this.ticksOverBlock > AutoClickerModule.breakBlocksDelay.getValue()) {
+            return !isHittingBlockField.get(mc.field_71442_b);
+        }
         return true;
         
     }

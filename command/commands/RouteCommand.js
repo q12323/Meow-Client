@@ -1,10 +1,16 @@
 import { AutoRouteConfig } from "../../module/modules/autoRoute/AutoRouteConfig";
 import { BlockList } from "../../module/modules/autoRoute/block/BlockList";
 import { RouteManager } from "../../module/modules/autoRoute/route/RouteManager";
+import { AlignRoute } from "../../module/modules/autoRoute/route/routes/AlignRoute";
 import { AotvRoute } from "../../module/modules/autoRoute/route/routes/AotvRoute";
 import { BatRoute } from "../../module/modules/autoRoute/route/routes/BatRoute";
 import { BoomRoute } from "../../module/modules/autoRoute/route/routes/BoomRoute";
+import { ClipRoute } from "../../module/modules/autoRoute/route/routes/ClipRoute";
+import { CommandRoute } from "../../module/modules/autoRoute/route/routes/CommandRoute";
 import { EtherwarpTargetRoute } from "../../module/modules/autoRoute/route/routes/EtherwarpTargetRoute";
+import { HypeRoute } from "../../module/modules/autoRoute/route/routes/HypeRoute";
+import { JumpRoute } from "../../module/modules/autoRoute/route/routes/JumpRoute";
+import { LookRoute } from "../../module/modules/autoRoute/route/routes/LookRoute";
 import { PearlClipRoute } from "../../module/modules/autoRoute/route/routes/PearlClipRoute";
 import { StopRoute } from "../../module/modules/autoRoute/route/routes/StopRoute";
 import { UseItemRoute } from "../../module/modules/autoRoute/route/routes/UseItemRoute";
@@ -17,6 +23,7 @@ import { RoomUtils } from "../../utils/RoomUtils";
 import { Scheduler } from "../../utils/Scheduler";
 import { Command } from "../Command";
 
+const mc = McUtils.mc;
 const MCBlock = Java.type("net.minecraft.block.Block");
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook");
 
@@ -64,60 +71,140 @@ export class RouteCommand extends Command {
 
     addRoute(args) {
         if (args.length < 3) {
-            ChatUtils.prefixChat(`Usage: ,${args[0]} ${args[1]} <type> <await_secret>`);
+            ChatUtils.prefixChat(`Usage: ,${args[0]} ${args[1]} <type> [args]`);
             return;
         }
 
         const playerCoords = RoomUtils.getRelativeCoords(Math.floor(Player.getX()) + 0.5, Math.floor(Player.getY()), Math.floor(Player.getZ()) + 0.5);
         // console.log(playerCoords.join(", "));
         const roomName = RoomUtils.getCurrentRoomName();
-        const awaitSecret = String(args[3]).toLowerCase() === "true" ? true : false;
+        const routeArgs = {};
+
+        const setRouteArg = (name, value) => {
+            name = name?.toLowerCase();
+            value = value?.toLowerCase();
+            switch (name) {
+                case "true":
+                case "awaitsecret":
+                case "await":
+                case "bat":
+                case "item":
+                case "secret": {
+                    routeArgs.await_secret = true;
+                    break;
+                }
+
+                case "delay": {
+                    value = Number(value);
+                    if (!isNaN(value)) {
+                        routeArgs.delay = value;
+                    }
+                    break;
+                }
+
+                case "block": {
+                    value = value?.split(";") || [];
+            
+                    let id = Number(value[0]);
+                    let meta = Number(value[1]);
+                    let x = Number(value[2]);
+                    let y = Number(value[3]);
+                    let z = Number(value[4]);
+                    
+
+                    if (isNaN(id)) id = 0;
+                    if (isNaN(meta)) meta = 0;
+                    if (isNaN(x) || isNaN(y) || isNaN(z)) {
+                        let blockPos = mc.field_71476_x?.func_178782_a();
+                        if (!blockPos) break;
+                        x = blockPos.func_177958_n();
+                        y = blockPos.func_177956_o();
+                        z = blockPos.func_177952_p();
+                    }
+            
+                    const pos = RoomUtils.getRelativeBlockPos(new BlockPos(x, y, z).toMCBlock());
+                    x = pos.func_177958_n();
+                    y = pos.func_177956_o();
+                    z = pos.func_177952_p();
+                    
+                    routeArgs.block = { x, y, z, id, meta };
+                    break;
+                }
+
+                default:
+                    console.log(`unexpected argument ${name}`);
+            }
+        }
+
+        for (let i = 3; i < args.length; i++) {
+            let [name, value] = args[i].split(":");
+            setRouteArg(name, value);
+        }
 
         const yaw = RoomUtils.getRelativeYaw(Player.getYaw());
         const pitch = Player.getPitch();
 
-        const arg2 = args[2].replaceAll(/[-_]/g, "").toLowerCase();
+        const type = args[2].replaceAll(/[-_]/g, "").toLowerCase();
 
         try {
-            switch(arg2) {
+            switch(type) {
                 case "etherwarptarget":
-                    // TODO: use etherwarp distance
                     const rayTrace = McUtils.rayTraceBlock(200, 1, true);
                     if (!rayTrace) throw new Error("no block in look");
 
                     const target = RoomUtils.getRelativeCoords(...rayTrace);
-                    new EtherwarpTargetRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], awaitSecret, target[0], target[1], target[2]);
+                    new EtherwarpTargetRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], routeArgs, target[0], target[1], target[2]);
                     ChatUtils.prefixChat("&aetherwarp_target&r Route has been added");
                     break;
 
                 case "walk":
-                    new WalkRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], awaitSecret, yaw, pitch);
+                    new WalkRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], routeArgs, yaw, pitch);
                     ChatUtils.prefixChat("&awalk&r Route has been added");
                     break;
 
-                /*case "bat":
-                    new BatRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], awaitSecret, yaw, pitch);
-                    ChatUtils.prefixChat("&abat&r Route has been added");
-                    break;*/
-
                 case "boom":
-                    new BoomRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], awaitSecret, yaw, pitch);
-                    ChatUtils.prefixChat("boom route added");
+                    new BoomRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], routeArgs, yaw, pitch);
+                    ChatUtils.prefixChat("&aboom&r Route has been addedd");
                     break;
 
                 case "stop":
-                    new StopRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], awaitSecret);
-                    ChatUtils.prefixChat("stop route added");
+                    new StopRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], routeArgs);
+                    ChatUtils.prefixChat("&astop&r Route has been added");
+                    break;
+
+                case "align":
+                    new AlignRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], routeArgs);
+                    ChatUtils.prefixChat("&aalign&r Route has been added");
+                    break;
+
+                case "look":
+                    new LookRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], routeArgs, yaw, pitch);
+                    ChatUtils.prefixChat("&alook&r Route has been added");
+                    break;
+
+                case "jump":
+                    new JumpRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], routeArgs);
+                    ChatUtils.prefixChat("&ajump&r Route has been added");
+                    break;
+
+                case "clip":
+                    new ClipRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], routeArgs, yaw, pitch, 1);
+                    ChatUtils.prefixChat("&aclip&r Route has been added");
+                    break;
+
+                case "command":
+                    ChatUtils.prefixChat("Usage: ,route add command:/name;arg1;arg2;arg3...");
                     break;
 
                 case "bat":
+                case "hype":
                 case "aotv": {
-                    ChatUtils.prefixChat(`recording ${arg2} do not move!`);
+                    ChatUtils.prefixChat(`recording ${type} do not move!`);
                     const timeClicked = Date.now();
                     McUtils.sendUseItem();
                     Scheduler.scheduleLowS08Task((packet, event) => {
                         if (timeClicked + 5000 < Date.now()) {
-                            ChatUtils.prefixChat("aotv record timeout");
+                            ChatUtils.prefixChat(`${type} record timeout`);
                             return;
                         }
                         let x = Math.floor(packet.func_148932_c());
@@ -136,14 +223,16 @@ export class RouteCommand extends Command {
 
                         const relTarget = RoomUtils.getRelativeBlockPos(new BlockPos(x, y, z).toMCBlock());
 
-                        Client.scheduleTask(() => {
+                        Scheduler.schedulePostTickTask(() => {
                             try {
-                                if (arg2 === "aotv") 
-                                    new AotvRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], awaitSecret, yaw, pitch, relTarget.func_177958_n(), relTarget.func_177956_o(), relTarget.func_177952_p());
-                                else
-                                    new BatRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], awaitSecret, yaw, pitch, relTarget.func_177958_n(), relTarget.func_177956_o(), relTarget.func_177952_p());
+                                if (type === "aotv") 
+                                    new AotvRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], routeArgs, yaw, pitch, relTarget.func_177958_n(), relTarget.func_177956_o(), relTarget.func_177952_p());
+                                else if (type === "hype") 
+                                    new HypeRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], routeArgs, yaw, pitch, relTarget.func_177958_n(), relTarget.func_177956_o(), relTarget.func_177952_p());
+                                else    
+                                    new BatRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], routeArgs, yaw, pitch, relTarget.func_177958_n(), relTarget.func_177956_o(), relTarget.func_177952_p());
                             
-                                ChatUtils.prefixChat(`${arg2} route added`);
+                                ChatUtils.prefixChat(`&a${type}&r Route has been added`);
                             } catch (error) {
                                 console.log("error while adding route: " + error);
                                 ChatUtils.prefixChat(`&c&o${args[2]}&r Route couldn't be added`);
@@ -154,22 +243,37 @@ export class RouteCommand extends Command {
                 }
 
                 default:
-                    if (arg2.startsWith("useitem:")) {
-                        new UseItemRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], awaitSecret, yaw, pitch, arg2.slice(8).toLowerCase().replaceAll(/[_\-\s]/g, ""));
+                    if (type.startsWith("useitem:")) {
+                        new UseItemRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], routeArgs, yaw, pitch, type.slice(8).toLowerCase().replaceAll(/[_\-\s]/g, ""));
                         ChatUtils.prefixChat("&ause_item&r Route has been added");
                         break;
-                    } else if (arg2.startsWith("pearlclip:")) {
-                        new PearlClipRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], awaitSecret, arg2.slice(10));
+                    } else if (type.startsWith("pearlclip:")) {
+                        new PearlClipRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], routeArgs, Number(type.slice(10)));
                         ChatUtils.prefixChat("&apearl_clip&r Route has been added");
                         break;
-                    } else if (arg2.startsWith("rightclick:")) {
+                    } else if (type.startsWith("rightclick:")) {
                         // new RightClickRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], awaitSecret, arg2.slice(11).toLowerCase().replaceAll(/[_\-\s]/g, ""));
                         // ChatUtils.prefixChat("&aright_click&r Route has been added");
                         ChatUtils.prefixChat("no more rightclick route");
                         break;
+                    } else if (type.startsWith("clip:")) {
+                        new ClipRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], routeArgs, yaw, pitch, Number(type.slice(5)));
+                        ChatUtils.prefixChat("&aclip&r Route has been added");
+                        break;
+                    } else if (type.startsWith("command:")) {
+                        const commandArgs = type.slice(8).split(";");
+                        if (!commandArgs.length) {
+                            ChatUtils.prefixChat("Usage: ,route add command:/name;arg1;arg2;arg3...");
+                            break;
+                        }
+
+                        const command = commandArgs.join(" ");
+                        new CommandRoute(roomName, playerCoords[0], playerCoords[1], playerCoords[2], routeArgs, command);
+                        ChatUtils.prefixChat(`&acommand&r Route has been added &o${command}&r`);
+                        break;
                     }
                     
-                    ChatUtils.prefixChat("Invalid value for route type (&oetherwarp_target&r/&owalk&r/&obat&r/&ouse_item&r/&opearl_clip&r/&oright_click&r)");
+                    ChatUtils.prefixChat("Invalid value for route type (&oetherwarp_target&r/&owalk&r/&obat&r/&ouse_item&r/&opearl_clip&r/&oclip&r/&ostop&r/&olook&r/&oboom&r/&oaotv&r/&oalign&r/&ocommand&r/&ojump&r)");
                     break;
 
             }

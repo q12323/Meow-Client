@@ -1,4 +1,5 @@
-import { C08PacketPlayerBlockPlacement, traverseVoxels } from "../../BloomCore/utils/Utils";
+import { traverseVoxels } from "../../BloomCore/utils/Utils";
+const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement");
 
 const rightClickDelayTimer = Client.getMinecraft().getClass().getDeclaredField("field_71467_ac");
 rightClickDelayTimer.setAccessible(true);
@@ -10,6 +11,7 @@ const MathHelper = Java.type("net.minecraft.util.MathHelper");
  * z: field_72449_c
  */
 const Vec3 = Java.type("net.minecraft.util.Vec3");
+const MCVec3i = Java.type("net.minecraft.util.Vec3i");
 
 const PlayerControllerMP = Java.type("net.minecraft.client.multiplayer.PlayerControllerMP");
 const syncCurrentPlayItemMethod = PlayerControllerMP.class.getDeclaredMethod("func_78750_j", null);
@@ -25,6 +27,7 @@ const mc = Client.getMinecraft();
 // const WorldSettings = Java.type("net.minecraft.world.WorldSettings");
 
 const sneakHeight = 0.0800000429153443;
+const realSneakHeight = 1.5399999618530273;
 const Float = Java.type("java.lang.Float");
 
 const EntityPlayerSP = Java.type("net.minecraft.client.entity.EntityPlayerSP");
@@ -44,6 +47,11 @@ lastReportedPosZField.setAccessible(true);
 export class McUtils {
     static mc = mc;
 
+    /**
+     * x: field_72450_a
+     * y: field_72448_b
+     * z: field_72449_c
+    */
     static Vec3 = Vec3;
 
     static MovingObjectPosition = MovingObjectPosition;
@@ -63,6 +71,9 @@ export class McUtils {
     }
 
     static getBlock(x, y, z) {
+        if (x instanceof MCVec3i) {
+            [x, y, z] = [x.func_177958_n(), x.func_177956_o(), x.func_177952_p()];
+        }
         return World.getBlockAt(Math.floor(x), Math.floor(y), Math.floor(z));
     }
 
@@ -72,9 +83,19 @@ export class McUtils {
      * @param {*} pitch 
      */
     static setRotations(yaw, pitch) {
+        pitch = MathLib.clamp(pitch, -90, 90);
+        if (isNaN(yaw) || isNaN(pitch)) throw new Error(`yaw or pitch is NaN yaw: ${yaw} pitch: ${pitch}`);
         Player.getPlayer().field_70177_z = yaw;
         Player.getPlayer().field_70125_A = pitch;
 
+    }
+
+    static addRotations(yaw, pitch) {
+        yaw = isNaN(yaw) ? 0 : yaw;
+        pitch = isNaN(pitch) ? 0 : pitch;
+        yaw += Player.getPlayer().field_70177_z;
+        pitch += Player.getPlayer().field_70125_A;
+        McUtils.setRotations(yaw, pitch);
     }
 
     static getRotations(yaw, pitch, currentYaw = Player.getYaw(), currentPitch = Player.getPitch()) {
@@ -149,11 +170,11 @@ export class McUtils {
      * @param {number} currentPitch
      * @returns [yawToMove, pitchToMove]
      */
-    static getAngles(x, y, z, calcYaw, calcPitch, currentYaw = Player.getYaw(), currentPitch = Player.getPitch(), forceSneak = false) {
+    static getAngles(x, y, z, calcYaw, calcPitch, currentYaw = Player.getYaw(), currentPitch = Player.getPitch(), forceSneak = false, playerX = Player.getRenderX(), playerY = Player.getRenderY(), playerZ = Player.getRenderZ()) {
         let yawToMove = null;
         let pitchToMove = null;
-        const ex = Player.getRenderX();
-        const ez = Player.getRenderZ();
+        const ex = playerX;
+        const ez = playerZ;
         const tvx = x - ex;
         const tvz = z - ez;
 
@@ -169,7 +190,7 @@ export class McUtils {
         if (calcPitch) {
             // const tvy = y - Player.getRenderY() - Player.getPlayer().func_70047_e();
 
-            pitchToMove = -Math.atan2(y - Player.getRenderY() - Player.getPlayer().func_70047_e() - (!Player.isSneaking() && forceSneak ? sneakHeight : 0), Math.sqrt(tvx * tvx + tvz * tvz)) * radToDeg - currentPitch;
+            pitchToMove = -Math.atan2(y - playerY - (forceSneak ? realSneakHeight : Player.getPlayer().func_70047_e()), Math.sqrt(tvx * tvx + tvz * tvz)) * radToDeg - currentPitch;
         }
 
         return [yawToMove, pitchToMove];
@@ -354,6 +375,11 @@ export class McUtils {
     static getVec3FromArray(array) {
         if (array instanceof Vec3) return array;
         return new Vec3(array[0], array[1], array[2]);
+    }
+
+    static getArrayFromVec3(vec3) {
+        if (Array.isArray(vec3)) return [vec3[0], vec3[1], vec3[2]];
+        return [vec3.field_72450_a, vec3.field_72448_b, vec3.field_72449_c];
     }
 
     static getClosesetMOPOnBlock(eyePos, blockPos, world) {

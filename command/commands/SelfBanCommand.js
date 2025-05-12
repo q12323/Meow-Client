@@ -29,9 +29,8 @@ export class SelfBanCommand extends Command {
                 accepted
             );
 
-            for (let i = 0; i < 10; i++) {
-                Client.sendPacket(packet);
-            }
+            Client.sendPacket(packet);  
+            Client.sendPacket(packet);
         }
     }
 }

@@ -50,6 +50,7 @@ register("worldLoad", () => {
 })
 
 const checkAllowedFails = () => {
+    // return false;
     // Queue of teleports too long
     if (recentlySentC06s.length >= MAXQUEUEDPACKETS) return false
     
@@ -184,7 +185,7 @@ export const doZeroPingEtherwarp = () => {
         return false;
     }
 
-    const rt = getEtherwarpBlock(57 + getTunerBonusDistance() - 1)
+    const rt = getEtherwarpBlock(true, 57 + getTunerBonusDistance() - 1)
     
     if (!rt) {
       return false;

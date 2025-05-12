@@ -11,8 +11,8 @@ import { SilentRotationHandler } from "../SilentRotationHandler";
 
 
 export class UseItemRoute extends Route {
-    constructor(room, x, y, z, awaitSecret, yaw, pitch, itemName) {
-        super("use_item", room, x, y, z, awaitSecret, 1);
+    constructor(room, x, y, z, args, yaw, pitch, itemName) {
+        super("use_item", room, x, y, z, args, 1);
         this.yaw = Number(yaw);
         this.pitch = Number(pitch);
         if (isNaN(this.yaw) || isNaN(this.pitch)) {
@@ -51,6 +51,7 @@ export class UseItemRoute extends Route {
             this.activated = true;
             return;
         }
+        this.args.startDelay();
 
         const yaw = RoomUtils.getRealYaw(this.yaw);
         const pitch = this.pitch;
@@ -59,18 +60,19 @@ export class UseItemRoute extends Route {
         const rotations = McUtils.getRotations(yaw, pitch);
         McUtils.setAngles(rotations[0] + (Ticker.getTick() % 2 * 2 - 1) * 1e-6, rotations[1]);
 
-        if (this.awaitSecret && !SecretThing.secretClicked) return;
-
-        if (!this.isRouteItem()) {
-            const result = HotbarSwapper.changeHotbar(index);
-            if (!result) return;
-        }
         
         Scheduler.schedulePostTickTask(() => {
+            if (!this.args.canExecute()) return;
+            if (!this.isRouteItem()) {
+                const result = HotbarSwapper.changeHotbar(index);
+                if (!result) return;
+            }
+            
             if (!SecretThing.canSendC08()) return;
             SecretThing.sendUseItem();
             this.activated = true;
             SecretThing.secretClicked = false;
+            this.args.clearDelayTimer();
         });
     }
 

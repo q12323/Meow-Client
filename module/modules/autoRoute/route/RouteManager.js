@@ -1,14 +1,20 @@
 import { RoomUtils } from "../../../../utils/RoomUtils";
+import { AlignRoute } from "./routes/AlignRoute";
 import { AotvRoute } from "./routes/AotvRoute";
 import { BatRoute } from "./routes/BatRoute";
+import { ClipRoute } from "./routes/ClipRoute";
 import { BoomRoute } from "./routes/BoomRoute";
+import { CommandRoute } from "./routes/CommandRoute";
 import { EtherwarpRoute } from "./routes/EtherwarpRoute";
 import { EtherwarpTargetRoute } from "./routes/EtherwarpTargetRoute";
+import { JumpRoute } from "./routes/JumpRoute";
+import { LookRoute } from "./routes/LookRoute";
 import { PearlClipRoute } from "./routes/PearlClipRoute";
 import { StopRoute } from "./routes/StopRoute";
 import { UseItemRoute } from "./routes/UseItemRoute";
 import { WalkRoute } from "./routes/WalkRoute";
 import { Routes } from "./RoutesList";
+import { HypeRoute } from "./routes/HypeRoute";
 
 export const RouteManager = new class {
     constructor() {
@@ -17,51 +23,78 @@ export const RouteManager = new class {
 
     addFromJsonObject(json) {
         const data = json.data;
+        const args = json.args || { await_secret: json.await_secret, odin_transform: data.odin_transform};
+        let addedRoute = null;
         switch(json.type) {
             case "etherwarp_target":
-                new EtherwarpTargetRoute(json.room, json.x, json.y, json.z, json.await_secret, data.x, data.y, data.z);
+                addedRoute = new EtherwarpTargetRoute(json.room, json.x, json.y, json.z, args, data.x, data.y, data.z);
                 break;
 
             case "walk":
-                new WalkRoute(json.room, json.x, json.y, json.z, json.await_secret, data.yaw, data?.pitch || 0);
+                addedRoute = new WalkRoute(json.room, json.x, json.y, json.z, args, data.yaw, data?.pitch || 0);
                 break;
 
             case "use_item":
-                new UseItemRoute(json.room, json.x, json.y, json.z, json.await_secret, data.yaw, data.pitch, data.item_name);
+                addedRoute = new UseItemRoute(json.room, json.x, json.y, json.z, args, data.yaw, data.pitch, data.item_name);
                 break;
 
             case "bat":
-                new BatRoute(json.room, json.x, json.y, json.z, json.await_secret, data.yaw, data.pitch, data.x, data.y, data.z);
+                addedRoute = new BatRoute(json.room, json.x, json.y, json.z, args, data.yaw, data.pitch, data.x, data.y, data.z);
                 break;
 
             case "pearl_clip":
-                new PearlClipRoute(json.room, json.x, json.y, json.z, json.await_secret, data.distance);
+                addedRoute = new PearlClipRoute(json.room, json.x, json.y, json.z, args, data.distance);
                 break;
 
             case "right_click":
-                new UseItemRoute(json.room, json.x, json.y, json.z, json.await_secret, 0, -90, data.item_name);
+                addedRoute = new UseItemRoute(json.room, json.x, json.y, json.z, args, 0, -90, data.item_name);
                 // new RightClickRoute(json.room, json.x, json.y, json.z, json.await_secret, data.item_name);
                 break;
 
             case "boom":
-                new BoomRoute(json.room, json.x, json.y, json.z, json.await_secret, data.yaw, data.pitch);
+                addedRoute = new BoomRoute(json.room, json.x, json.y, json.z, args, data.yaw, data.pitch);
                 break;
 
             case "stop":
-                new StopRoute(json.room, json.x, json.y, json.z, json.await_secret);
+                addedRoute = new StopRoute(json.room, json.x, json.y, json.z, args);
                 break;
 
             case "aotv":
-                new AotvRoute(json.room, json.x, json.y, json.z, json.await_secret, data.yaw, data.pitch, data.x, data.y, data.z);
+                addedRoute = new AotvRoute(json.room, json.x, json.y, json.z, args, data.yaw, data.pitch, data.x, data.y, data.z);
                 break
 
-            case "etherwarp":
-                new EtherwarpRoute(json.room, json.x, json.y, json.z, json.await_secret, data.yaw, data.pitch);
+            case "hype":
+                addedRoute = new HypeRoute(json.room, json.x, json.y, json.z, args, data.yaw, data.pitch, data.x, data.y, data.z);
                 break;
 
+            case "etherwarp":
+                addedRoute = new EtherwarpRoute(json.room, json.x, json.y, json.z, args, data.yaw, data.pitch);
+                break;
+
+            case "look":
+                addedRoute = new LookRoute(json.room, json.x, json.y, json.z, args, data.yaw, data.pitch);
+                break;
+
+            case "align":
+                addedRoute = new AlignRoute(json.room, json.x, json.y, json.z, args);
+                break;
+
+            case "command":
+                addedRoute = new CommandRoute(json.room, json.x, json.y, json.z, args, data.command);
+                break;
+
+            case "jump":
+                addedRoute = new JumpRoute(json.room, json.x, json.y, json.z, args);
+                break;
+
+            case "clip":
+                addedRoute = new ClipRoute(json.room, json.x, json.y, json.z, args, data.yaw, data.pitch, data.distance);
+                break;
+            
             default:
                 console.log(`Unknown route type: ${json.type}`);
         }
+        
     }
 
     removeClosestRoute(range) {

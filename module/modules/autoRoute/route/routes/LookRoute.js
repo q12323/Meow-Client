@@ -1,14 +1,11 @@
-import { KeyBindingUtils } from "../../../../../utils/KeyBindingUtils";
 import { McUtils } from "../../../../../utils/McUtils";
 import { RoomUtils } from "../../../../../utils/RoomUtils";
 import { SecretThing } from "../../SecretThing";
-import { Ticker } from "../../Ticker";
 import { Route } from "../Route";
-import { SilentRotationHandler } from "../SilentRotationHandler";
 
-export class WalkRoute extends Route {
+export class LookRoute extends Route {
     constructor(room, x, y, z, args, yaw, pitch) {
-        super("walk", room, x, y, z, args, -1);
+        super("look", room, x, y, z, args, 9);
         this.yaw = Number(yaw);
         this.pitch = Number(pitch);
         if (isNaN(this.yaw) || isNaN(this.pitch)) {
@@ -26,17 +23,10 @@ export class WalkRoute extends Route {
     
     run() {
         this.args.startDelay();
-        KeyBindingUtils.setKeyState(KeyBindingUtils.gameSettings.field_74311_E.func_151463_i(), false)
+        if (!this.args.canExecute()) return;
         const yaw = RoomUtils.getRealYaw(this.yaw);
         const rotation = McUtils.getRotations(yaw, this.pitch);
-        if (!this.args.canExecute()) {
-            SilentRotationHandler.doSilentRotation();
-            McUtils.setAngles(rotation[0] + (Ticker.getTick() % 2 * 2 - 1) * 1e-6, rotation[1]);
-            return;
-        }
-        if (Player.isSneaking()) return;
         McUtils.setAngles(rotation[0], rotation[1]);
-        KeyBindingUtils.setKeyState(KeyBindingUtils.gameSettings.field_74351_w.func_151463_i(), true);
         
         this.activated = true;
         SecretThing.secretClicked = false;

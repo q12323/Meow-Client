@@ -1,6 +1,5 @@
 import { ChatUtils } from "../../../../../utils/ChatUtils";
 import { HotbarSwapper } from "../../../../../utils/HotbarSwapper";
-import { ItemUtils } from "../../../../../utils/ItemUtils";
 import { McUtils } from "../../../../../utils/McUtils";
 import { Scheduler } from "../../../../../utils/Scheduler";
 import { SecretThing } from "../../SecretThing";
@@ -11,8 +10,8 @@ import { SilentRotationHandler } from "../SilentRotationHandler";
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook");
 
 export class PearlClipRoute extends Route {
-    constructor(room, x, y, z, awaitSecret, distance) {
-        super("pearl_clip", room, x, y, z, awaitSecret, 0);
+    constructor(room, x, y, z, args, distance) {
+        super("pearl_clip", room, x, y, z, args, 0);
         this.distance = Number(distance);
         if (isNaN(this.distance)) {
             this.delete();
@@ -31,11 +30,9 @@ export class PearlClipRoute extends Route {
         try {
             const items = Player.getInventory().getItems();
             for (let i = 0; i < 9; i++) {
-                if (items[i]?.getID() === 368) {
+                if (items[i]?.getID() === 368 && items[i]?.getName() !== "Spirit Leap") {
                     index = i;
-                    if (items[i].getName() !== "Spirit Leap") {
                     break;
-                    }
                 }
             }
         } catch (error) {
@@ -49,16 +46,10 @@ export class PearlClipRoute extends Route {
             return;
         }
         
+        this.args.startDelay();
         SilentRotationHandler.doSilentRotation();
         McUtils.setAngles((Ticker.getTick() % 2 * 2 - 1) * 1e-6, 90 - Player.getPitch());
 
-        if (this.awaitSecret && !SecretThing.secretClicked) return;
-
-        const isHoldingPearl = ItemUtils.getHeldItem()?.getID() === 368;
-        if (!isHoldingPearl) {
-            const result = HotbarSwapper.changeHotbar(index);
-            if (!result) return;
-        }
 
         const playerState = {
             yaw: Player.getRawYaw(),
@@ -66,10 +57,18 @@ export class PearlClipRoute extends Route {
         };
 
         Scheduler.schedulePostTickTask(() => {
+            if (!this.args.canExecute()) return;
+    
+            const isHoldingPearl = Player.getHeldItemIndex() === index;
+            if (!isHoldingPearl) {
+                const result = HotbarSwapper.changeHotbar(index);
+                if (!result) return;
+            }
             if (!SecretThing.canSendC08()) return;
             SecretThing.sendUseItem();
             this.activated = true;
             SecretThing.secretClicked = false;
+            this.args.clearDelayTimer();
 
             playerState.x = Player.getX();
             playerState.y = Player.getY();

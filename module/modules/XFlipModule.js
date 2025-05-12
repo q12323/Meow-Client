@@ -7,7 +7,7 @@ export class XFlipModule extends Module {
     }
 
     setToggled(toggled) {
-        RoomUtils.xFlip = toggled;
+        // RoomUtils.xFlip = toggled;
         super.setToggled(toggled);
     }
 }
