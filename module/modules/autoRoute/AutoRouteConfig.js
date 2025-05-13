@@ -1,5 +1,5 @@
-import { Blocks } from "../../../../BloomCore/utils/Utils";
 import { McUtils } from "../../../utils/McUtils";
+import { Scheduler } from "../../../utils/Scheduler";
 import { BlockList } from "./block/BlockList";
 import { RouteBlock } from "./block/RouteBlock";
 import { RouteManager } from "./route/RouteManager";
@@ -15,21 +15,21 @@ const defaultName = "default";
 
 export const AutoRouteConfig = new class {
     constructor() {
-        try {
-            if (this.doesExist(defaultName)) {
-                try {
-                    this.load(defaultName);
-                } catch (error) {
-                    console.log("error while loading autoroute default " + error);
+        Scheduler.schedulePreTickTask(() => {
+            try {
+                if (this.doesExist(defaultName)) {
+                    try {
+                        this.load(defaultName);
+                    } catch (error) {
+                        console.log("error while loading autoroute default " + error);
+                    }
+                } else {
                     this.save(defaultName);
                 }
-            } else {
-                this.save(defaultName);
+            } catch (error) {
+                console.log("error while saving routes: " + error);
             }
-        } catch (error) {
-            console.log("error while saving routes: " + error);
-        }
-        
+        })
     }
 
     /**
@@ -69,9 +69,9 @@ export const AutoRouteConfig = new class {
             console.log(`error while loading autoroute blocks ${error}`)
         }
 
-        if (overrideConfig) {
-            this.save(name);
-        }
+        // if (overrideConfig) {
+        //     this.save(name);
+        // }
     }
 
     save(name) {

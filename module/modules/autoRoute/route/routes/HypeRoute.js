@@ -1,4 +1,5 @@
 import { ItemUtils } from "../../../../../utils/ItemUtils";
+import { KeyBindingUtils } from "../../../../../utils/KeyBindingUtils";
 import { AotvRoute } from "./AotvRoute";
 
 export class HypeRoute extends AotvRoute {
@@ -6,6 +7,14 @@ export class HypeRoute extends AotvRoute {
         super(room, x, y, z, awaitSecret, yaw, pitch, targetX, targetY, targetZ);
         this.type = "hype";
         this.name = "hyperion";
+    }
+
+    checkAndChangeHotbar(index) {
+        if (!this.isRouteItem()) {
+            KeyBindingUtils.pressHotbar(index);
+            return false;
+        }
+        return true;
     }
     
     isRouteItem(item = ItemUtils.getHeldItem()) {

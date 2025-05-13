@@ -4,6 +4,11 @@ const Color = Java.type("java.awt.Color");
 
 export class PropertyRgb extends Property {
 
+    r;
+    g;
+    b;
+    color;
+
     /**
      * 
      * @param {string} name 
@@ -11,10 +16,7 @@ export class PropertyRgb extends Property {
      */
     constructor(name, defaultValue) {
         super(name, "RGB", defaultValue);
-
-        this.r;
-        this.g;
-        this.b;
+        this.setDefaultValue();
 
     }
 

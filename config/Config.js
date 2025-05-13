@@ -1,4 +1,5 @@
 import { ModuleManager } from "../module/ModuleManager";
+import { Scheduler } from "../utils/Scheduler";
 
 const JavaFile = Java.type("java.io.File");
 
@@ -8,19 +9,21 @@ export const ConfigClass = new class {
 	default = "default";
 
 	constructor() {
-		try {
-			if (this.doesExist(this.default)) {
-				try {
-					this.load(this.default);
-				} catch(error) {
+		Scheduler.schedulePreTickTask(() => {
+			try {
+				if (this.doesExist(this.default)) {
+					try {
+						this.load(this.default);
+					} catch (error) {
+						this.save(this.default);
+					}
+				} else {
 					this.save(this.default);
 				}
-			} else {
-				this.save(this.default);
+			} catch (error) {
+				console.log("error while loading default config: " + error);
 			}
-		} catch (error) {
-			console.log("error while loading default config: " + error);
-		}
+		})
 	}
 
 	/**

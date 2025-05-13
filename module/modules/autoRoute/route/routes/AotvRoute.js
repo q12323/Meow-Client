@@ -75,10 +75,7 @@ export class AotvRoute extends Route {
             
             if (!this.args.canExecute()) return;
 
-            if (!this.isRouteItem()) {
-                const result = HotbarSwapper.changeHotbar(index);
-                if (!result) return;
-            }
+            if (!this.checkAndChangeHotbar(index)) return;
             
             if (!SecretThing.canSendC08()) return;
             SecretThing.sendUseItem();
@@ -89,6 +86,14 @@ export class AotvRoute extends Route {
             this.args.clearDelayTimer();
         })
 
+    }
+
+    checkAndChangeHotbar(index) {
+        if (!this.isRouteItem()) {
+                const result = HotbarSwapper.changeHotbar(index);
+                if (!result) return false;
+        }
+        return true;
     }
 
     isRouteItem(item = ItemUtils.getHeldItem()) {

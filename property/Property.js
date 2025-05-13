@@ -13,6 +13,7 @@ export class Property {
 		this.value = defaultValue;
 
 		this.onValueChanged = (value) => {};
+		this.setDefaultValue();
 	}
 
 	getProperValue(value) {
