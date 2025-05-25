@@ -31,7 +31,7 @@
 
 # How to install Meow Client?
 1. Install ctjs (ChatTriggers) from ChatTriggers.com
-2. install 1.30+ odin or odinclient from https://github.com/odtheking/Odin
+2. install 1.3.0+ odin or odinclient from https://github.com/odtheking/Odin
 3. Download MeowClient from Release.
 4. After launch your MC with ctjs, use /ct files.
 5. Put MeowClient inside modules folder.
