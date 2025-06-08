@@ -66,7 +66,7 @@ export class Route {
 
     swingReset() {
         if (this.args.awaitSecret) {
-            SecretThing.secretClicked = true;
+            SecretThing.secretClicked = Number.MAX_VALUE;
         }
         this.activated = false;
         this.args.clearDelayTimer();

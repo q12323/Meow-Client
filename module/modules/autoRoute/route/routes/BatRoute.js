@@ -93,7 +93,7 @@ export class BatRoute extends Route {
                 doZeroPingAotv(targetPos[0], targetPos[1], targetPos[2]);
             }
             this.activated = true;
-            SecretThing.secretClicked = false;
+            SecretThing.secretClicked = 0;
             this.args.clearDelayTimer();
         });
 

@@ -67,7 +67,7 @@ export class PearlClipRoute extends Route {
             if (!SecretThing.canSendC08()) return;
             SecretThing.sendUseItem();
             this.activated = true;
-            SecretThing.secretClicked = false;
+            SecretThing.secretClicked = 0;
             this.args.clearDelayTimer();
 
             playerState.x = Player.getX();

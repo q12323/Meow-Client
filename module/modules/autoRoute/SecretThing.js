@@ -14,7 +14,7 @@ const MCItemStack = Java.type("net.minecraft.item.ItemStack");
 
 export const SecretThing = new class {
     constructor() {
-        this.secretClicked = false;
+        this.secretClicked = 0;
         this.isListening = false;
         this.registerTrapChest = false;
 
@@ -41,7 +41,7 @@ export const SecretThing = new class {
 
             const blockId = World.getBlockAt(new BlockPos(packet.func_179724_a())).type.getID();
             if (blockId === 144 || blockId === 54 || blockId === 69 || (this.registerTrapChest && blockId === 146)) {
-                this.secretClicked = true;
+                ++this.secretClicked;
                 Scheduler.schedulePostTickTask(() => {
                     if (!this.didMatched && SkyblockUtils.isInSkyblock()) {
                         const itemStack = packet.func_149574_g();
@@ -60,11 +60,11 @@ export const SecretThing = new class {
         }).setFilteredClass(C09PacketHeldItemChange).unregister();
 
         this.itemSecretListener = register(SecretPickupEvent.Item, () => {
-            this.secretClicked = true;
+            ++this.secretClicked;
         }).unregister();
 
         this.batSecretListener = register(SecretPickupEvent.Bat, () => {
-            this.secretClicked = true;
+            ++this.secretClicked;
         }).unregister();
 
         
@@ -73,11 +73,11 @@ export const SecretThing = new class {
         //Detect Chest with C08PacketPlayerBlockPlacement
 
         //this.mimickillListner = register(MimicKilledEvent, () => {
-        //    this.secretClicked = true;
+        //    ++this.secretClicked;
         //})
 
         this.secretResetTrigger = register(RoomEnterEvent, (event) => {
-            this.secretClicked = false;
+            this.secretClicked = 0;
         }).unregister();
     }
 
@@ -89,7 +89,7 @@ export const SecretThing = new class {
         this.secretResetTrigger.register();
         this.c09Trigger.register();
         this.clicked = 0;
-        this.secretClicked = false;
+        this.secretClicked = 0;
         this.isListening = true;
     }
 

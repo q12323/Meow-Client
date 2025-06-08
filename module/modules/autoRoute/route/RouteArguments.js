@@ -6,7 +6,7 @@ export class RouteArguments {
 
     static BlockArgument;
 
-    awaitSecret = false;
+    awaitSecret = 0;
     delay = 0;
     odinTransform = false;
     block = null;
@@ -27,13 +27,14 @@ export class RouteArguments {
 
     canExecute() {
         if (this.delayTimer + this.delay > Date.now()) return false;
-        if (this.awaitSecret && !SecretThing.secretClicked) return false;
+        if (this.awaitSecret > SecretThing.secretClicked) return false;
         if (this.block && !this.block.canExecute()) return false;
         return true;
     }
 
     setFromJsonObject(json) {
-        if (json.await_secret) this.awaitSecret = true;
+        const awaitSecret = Number(json.await_secret);
+        if (!isNaN(awaitSecret)) this.awaitSecret = awaitSecret;
         const delay = Number(json.delay);
         if (!isNaN(delay)) this.delay = delay;
         if (json.odin_transform) this.odinTransform = true;
@@ -49,7 +50,7 @@ export class RouteArguments {
 
     getJsonObject() {
         const obj = {};
-        if (this.awaitSecret) obj.await_secret = true;
+        if (this.awaitSecret) obj.await_secret = this.awaitSecret;
         if (this.delay) obj.delay = this.delay;
         if (this.odinTransform) obj.odin_transform = true;
         if (this.block) obj.block = this.block.getJsonObject();

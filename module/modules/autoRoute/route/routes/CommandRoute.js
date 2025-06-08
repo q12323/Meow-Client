@@ -34,7 +34,7 @@ export class CommandRoute extends Route {
         }
 
         this.activated = true;
-        SecretThing.secretClicked = false;
+        SecretThing.secretClicked = 0;
         this.args.clearDelayTimer();
         return true;
     }

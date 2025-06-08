@@ -90,7 +90,9 @@ export class RouteCommand extends Command {
                 case "bat":
                 case "item":
                 case "secret": {
-                    routeArgs.await_secret = true;
+                    value = Number(value);
+                    if (isNaN(value)) value = 1;
+                    routeArgs.await_secret = value;
                     break;
                 }
 

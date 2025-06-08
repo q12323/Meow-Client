@@ -35,7 +35,7 @@ export class ClipRoute extends Route {
         Player.getPlayer().func_70107_b(x, Player.getY(), z);
 
         this.activated = true;
-        SecretThing.secretClicked = false;
+        SecretThing.secretClicked = 0;
         this.args.clearDelayTimer();
     }
 

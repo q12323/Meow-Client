@@ -17,7 +17,7 @@ export class JumpRoute extends Route {
         Scheduler.schedulePreTickTask(() => KeyBindingUtils.setKeyState(jumpkey, false), 1);
 
         this.activated = true;
-        SecretThing.secretClicked = false;
+        SecretThing.secretClicked = 0;
         this.args.clearDelayTimer();
     }
 }

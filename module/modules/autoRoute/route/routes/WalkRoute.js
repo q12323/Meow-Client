@@ -39,7 +39,7 @@ export class WalkRoute extends Route {
         KeyBindingUtils.setKeyState(KeyBindingUtils.gameSettings.field_74351_w.func_151463_i(), true);
         
         this.activated = true;
-        SecretThing.secretClicked = false;
+        SecretThing.secretClicked = 0;
         this.args.clearDelayTimer();
         return true;
     }

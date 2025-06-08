@@ -14,7 +14,7 @@ export class AlignRoute extends Route {
         Player.getPlayer().func_70107_b(pos[0], Player.getY(), pos[2]);
         
         this.activated = true;
-        SecretThing.secretClicked = false;
+        SecretThing.secretClicked = 0;
         this.args.clearDelayTimer();
         return true;
     }

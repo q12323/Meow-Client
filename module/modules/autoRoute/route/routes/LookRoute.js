@@ -29,7 +29,7 @@ export class LookRoute extends Route {
         McUtils.setAngles(rotation[0], rotation[1]);
         
         this.activated = true;
-        SecretThing.secretClicked = false;
+        SecretThing.secretClicked = 0;
         this.args.clearDelayTimer();
         return true;
     }

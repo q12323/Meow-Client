@@ -93,7 +93,7 @@ export class EtherwarpTargetRoute extends Route {
             SecretThing.sendUseItem();
             doZeroPingEtherwarp();
             this.activated = true;
-            SecretThing.secretClicked = false;
+            SecretThing.secretClicked = 0;
             this.args.clearDelayTimer();
         })
     }
