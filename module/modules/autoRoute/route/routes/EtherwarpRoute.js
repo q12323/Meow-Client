@@ -73,7 +73,9 @@ export class EtherwarpRoute extends Route {
 
             if (!SecretThing.canSendC08()) return;
             SecretThing.sendUseItem();
+            McUtils.setSneaking(false);
             doZeroPingEtherwarp();
+            McUtils.setSneaking(true);
             this.activated = true;
             SecretThing.secretClicked = 0;
             this.args.clearDelayTimer();

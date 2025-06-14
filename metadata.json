@@ -2,7 +2,7 @@
     "name": "MeowClient",
     "creator": "MeowClient Team",
     "description": "no myau",
-    "version": "250608",
+    "version": "250614-hotfix",
     "entry": "index.js",
     "requires": [
         "BloomCore",

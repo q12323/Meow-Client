@@ -13,7 +13,7 @@ import { Route } from "../Route";
 import { SilentRotationHandler } from "../SilentRotationHandler";
 
 const keybindSneak = KeyBindingUtils.gameSettings.field_74311_E;
-const sneakHeight = 1.5399999618530273;
+const sneakHeight = 1.6200000047683716;//1.5399999618530273;
 
 export class EtherwarpTargetRoute extends Route {
 
@@ -77,7 +77,8 @@ export class EtherwarpTargetRoute extends Route {
             const lastPos = McUtils.getLastReportedPos();
             const lastLook = McUtils.getLastReportedRotations();
 
-            const rayTraced = McUtils.rayTraceBlock(200, 1, true, lastLook[0], lastLook[1], lastPos[0], lastPos[1], lastPos[2]);
+            McUtils.setSneaking(false);
+            const rayTraced = McUtils.rayTraceBlock(200, 1, false, lastLook[0], lastLook[1], lastPos[0], lastPos[1], lastPos[2]);
             if (rayTraced === null) return;
     
             const canEtherwarp = Math.floor(rayTraced[0]) === Math.floor(targetCoords[0]) && Math.floor(rayTraced[1]) === Math.floor(targetCoords[1]) && Math.floor(rayTraced[2]) === Math.floor(targetCoords[2]);
@@ -95,6 +96,7 @@ export class EtherwarpTargetRoute extends Route {
             this.activated = true;
             SecretThing.secretClicked = 0;
             this.args.clearDelayTimer();
+            McUtils.setSneaking(true);
         })
     }
 
