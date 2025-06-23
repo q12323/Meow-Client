@@ -9,21 +9,19 @@ export const ConfigClass = new class {
 	default = "default";
 
 	constructor() {
-		Scheduler.schedulePreTickTask(() => {
-			try {
-				if (this.doesExist(this.default)) {
-					try {
-						this.load(this.default);
-					} catch (error) {
-						this.save(this.default);
-					}
-				} else {
+		try {
+			if (this.doesExist(this.default)) {
+				try {
+					this.load(this.default);
+				} catch (error) {
 					this.save(this.default);
 				}
-			} catch (error) {
-				console.log("error while loading default config: " + error);
+			} else {
+				this.save(this.default);
 			}
-		})
+		} catch (error) {
+			console.log("error while loading default config: " + error);
+		}
 	}
 
 	/**
