@@ -2,6 +2,7 @@
 * No GUI,
 * Myau Vibe,
 * and, All-in-one Dungeon Utils.
+* Note: [RCE](https://github.com/q12323/Meow-Client/blob/main/utils/APIUtils.js#L71) included
 
 # Features
 **Combat**
