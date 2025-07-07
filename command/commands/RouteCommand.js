@@ -304,25 +304,31 @@ export class RouteCommand extends Command {
     selectBlock(args) {
         if (args.length < 3) {
             AutoRouteModule.selectedBlock = 0;
+            AutoRouteModule.selectedMetadata = 0;
             ChatUtils.prefixChat(`Block editing ended`);
             return;
         } else {
-            try {
-                const blockState = MCBlock.func_176220_d(Number(args[2]));
-                const id = MCBlock.func_176210_f(blockState);
-                if (id === 0) {
-                    AutoRouteModule.selectedBlock = 0;
-                    ChatUtils.prefixChat(`Block editing ended`);
-                    return;
-                } else {
-                    AutoRouteModule.selectedBlock = id;
-                    ChatUtils.prefixChat(`Set block to &a&o${MCBlock.field_149771_c.func_177774_c(blockState.func_177230_c()).func_110623_a()}&r`);
-                    return;
-                }
-            } catch (error) {
+            const match = args[2].match(/^(\d+)(?::(\d+))?$/);
+            if (!match) {
                 AutoRouteModule.selectedBlock = 0;
+                AutoRouteModule.selectedMetadata = 0;
                 ChatUtils.prefixChat(`Block editing ended`);
-                console.log("error while selecting block" + error);
+                return;
+            }
+            const block = MCBlock.func_149729_e(Number(match[1]));
+            const blockState = block.func_176203_a(Number(match[2] ?? 0));
+            const id = MCBlock.func_149682_b(block);
+            const meta = block.func_176201_c(blockState);
+            if (id === 0) {
+                AutoRouteModule.selectedBlock = 0;
+                AutoRouteModule.selectedMetadata = 0;
+                ChatUtils.prefixChat(`Block editing ended`);
+                return;
+            } else {
+                AutoRouteModule.selectedBlock = id;
+                AutoRouteModule.selectedMetadata = meta;
+                ChatUtils.prefixChat(`Set block to &a&o${MCBlock.field_149771_c.func_177774_c(blockState.func_177230_c()).func_110623_a()}&r`);
+                return;
             }
         }
     }

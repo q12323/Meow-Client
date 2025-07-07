@@ -68,6 +68,7 @@ export class AutoRouteModule extends Module {
     static maxShiftedTicks = new PropertyInteger("max-shifted-ticks", 5, 1, 15);
 
     static selectedBlock = 0;
+    static selectedMetadata = 0;
 
     constructor() {
         super("AutoRoute", false, 0, false);
@@ -339,7 +340,7 @@ export class AutoRouteModule extends Module {
             } else return;
             
             const relPos = RoomUtils.getRelativeBlockPos(new BlockPos(x, y, z).toMCBlock());
-            new RouteBlock(roomName, relPos, MCBlock.func_176220_d(AutoRouteModule.selectedBlock));
+            new RouteBlock(roomName, relPos, MCBlock.func_149729_e(AutoRouteModule.selectedBlock).func_176203_a(AutoRouteModule.selectedMetadata));
             cancel(event);
         }
     }

@@ -61,7 +61,7 @@ export const AutoRouteConfig = new class {
             for (let room of configObject.Rooms) {
                 for (let block of room.blocks) {
                     if (!Array.isArray(block)) block = block.split(",")
-                    new RouteBlock(room.name, new BlockPos(Number(block[0]), Number(block[1]), Number(block[2])).toMCBlock(), MCBlock.func_176220_d(block[3]));
+                    new RouteBlock(room.name, new BlockPos(Number(block[0]), Number(block[1]), Number(block[2])).toMCBlock(), MCBlock.func_149729_e(block[3]).func_176203_a(block[4] ?? 0));
                 }
             }
         } catch (error) {
@@ -104,11 +104,14 @@ export const AutoRouteConfig = new class {
             for (let block of blocks) {
                 if (block.deleted) continue;
                 let pos = block.pos;
+                let id = MCBlock.func_149682_b(block.state.func_177230_c());
+                let meta = block.state.func_177230_c().func_176201_c(block.state);
                 roomObj.blocks.push([
                     pos.func_177958_n(),
                     pos.func_177956_o(),
                     pos.func_177952_p(),
-                    MCBlock.func_176210_f(block.state)
+                    id,
+                    meta
                 ].join(","));
             }
             roomsArray.push(roomObj);
